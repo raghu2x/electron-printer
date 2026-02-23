@@ -1,15 +1,16 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import * as fs from 'fs';
 import * as path from 'path';
+import type { PosPrintData } from '../main/models';
 
-contextBridge.exposeInMainWorld('electronAPI', {
+const electronAPI = {
   onBodyInit: (callback: (options: { width?: string; margin?: string }) => void) => {
     ipcRenderer.on('body-init', (_event, arg) => {
       callback(arg);
     });
   },
 
-  onRenderLine: (callback: (data: { line: any; lineIndex: number }) => void) => {
+  onRenderLine: (callback: (data: { line: PosPrintData; lineIndex: number }) => void) => {
     ipcRenderer.on('render-line', (_event, arg) => {
       callback(arg);
     });
@@ -29,9 +30,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
       const normalizedPath = path.resolve(filePath);
       const cwd = process.cwd();
 
-      // Ensure the path is within the current working directory or is an absolute path to an allowed location
-      if (!path.isAbsolute(filePath) && !normalizedPath.startsWith(cwd)) {
-        return { success: false, error: 'Access denied: Invalid file path' };
+      // Only allow paths within the current working directory
+      if (!normalizedPath.startsWith(cwd + path.sep) && normalizedPath !== cwd) {
+        return { success: false, error: 'Access denied: Path outside allowed directory' };
       }
 
       // Check that the file exists before reading
@@ -49,4 +50,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getFileExtension: (filePath: string): string => {
     return path.extname(filePath).slice(1);
   },
-});
+};
+
+contextBridge.exposeInMainWorld('electronAPI', electronAPI);
+
+declare global {
+  interface Window {
+    electronAPI: typeof electronAPI;
+  }
+}

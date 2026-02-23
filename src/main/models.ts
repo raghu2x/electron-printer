@@ -48,10 +48,6 @@ export interface PosPrintOptions {
   pathTemplate?: string;
 }
 
-export interface SizeOptions {
-  height: number;
-  width: number;
-}
 /**
  * @type PosPrintPosition
  * @description Alignment for type barCode and qrCode

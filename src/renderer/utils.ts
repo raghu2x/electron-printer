@@ -19,7 +19,7 @@ export function sanitizeHtml(html: string): string {
  * @description used for type text, used to generate type text
  * */
 export function generatePageText(arg: PosPrintData): HTMLElement {
-  const div = applyElementStyles(document.createElement('div'), arg.style!) as HTMLElement;
+  const div = applyElementStyles(document.createElement('div'), arg.style) as HTMLElement;
   div.innerHTML = sanitizeHtml(arg.value || '');
 
   return div;
@@ -136,7 +136,7 @@ export function isBase64(str: string): boolean {
  * @param style {PrintDataStyle}
  * @description Apply styles to created elements on print web page.
  * */
-export function applyElementStyles(element: PageElement, style: PrintDataStyle): PageElement {
+export function applyElementStyles(element: PageElement, style: PrintDataStyle = {}): PageElement {
   if (!style || typeof style !== 'object') {
     return element;
   }

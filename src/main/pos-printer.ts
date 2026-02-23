@@ -33,7 +33,7 @@ const renderPrintDocument = async (window: BrowserWindow, data: PosPrintData[]):
     };
     if (!result.status) {
       window.close();
-      throw new Error(result.error || 'Failed to render line');
+      throw new Error(`Failed to render line ${lineIndex} (type: ${line.type}): ${result.error || 'Unknown error'}`);
     }
   }
   // when the render process is done rendering the page, resolve
@@ -47,11 +47,7 @@ const print = (data: PosPrintData[], options: PosPrintOptions): Promise<PrintRes
      */
     // 1. Reject if printer name is not set in live mode
     if (!options.preview && !options.printerName && !options.silent) {
-      reject(
-        new Error(
-          "A printer name is required, if you don't want to specify a printer name, set silent to true",
-        ).toString(),
-      );
+      reject(new Error("A printer name is required, if you don't want to specify a printer name, set silent to true"));
     }
     // 2. Reject if pageSize is object and pageSize.height or pageSize.width is not set
     if (typeof options.pageSize === 'object' && (!options.pageSize.height || !options.pageSize.width)) {
@@ -91,7 +87,7 @@ const print = (data: PosPrintData[], options: PosPrintOptions): Promise<PrintRes
      *
      */
 
-    let mainWindow = new BrowserWindow({
+    let mainWindow: BrowserWindow | null = new BrowserWindow({
       ...parsePaperSize(options.pageSize),
       show: !!options.preview,
       webPreferences: {
@@ -104,12 +100,17 @@ const print = (data: PosPrintData[], options: PosPrintOptions): Promise<PrintRes
 
     // Clean up when the mainWindow is closed
     mainWindow.on('closed', () => {
-      mainWindow = null as unknown as BrowserWindow;
+      mainWindow = null;
     });
 
     mainWindow.loadFile(options.pathTemplate || join(__dirname, 'renderer/index.html'));
 
     mainWindow.webContents.on('did-finish-load', async () => {
+      if (!mainWindow) {
+        reject(new Error('Window was closed before loading completed'));
+        return;
+      }
+
       await sendIpcMsg('body-init', mainWindow.webContents, options);
       /**
        * Render print data as html in the mainWindow render process
@@ -117,6 +118,11 @@ const print = (data: PosPrintData[], options: PosPrintOptions): Promise<PrintRes
        */
       return renderPrintDocument(mainWindow, data)
         .then(async () => {
+          if (!mainWindow) {
+            reject(new Error('Window was closed during rendering'));
+            return;
+          }
+
           let { width, height } = parsePaperSizeInMicrons(options.pageSize);
           // Get the height of content window, if the pageSize is a string
           if (typeof options.pageSize === 'string') {
@@ -175,7 +181,7 @@ const print = (data: PosPrintData[], options: PosPrintOptions): Promise<PrintRes
                 resolve({ complete: success, options });
                 printedState = true;
               }
-              mainWindow.close();
+              mainWindow?.close();
             },
           );
         })

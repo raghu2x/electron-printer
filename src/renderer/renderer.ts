@@ -1,7 +1,15 @@
 // oxlint-disable-next-line import/no-unassigned-import
 import './index.css';
-import { applyElementStyles, generatePageText, generateQRCode, generateTableCell, renderImageToPage, sanitizeHtml } from './utils';
+import {
+  applyElementStyles,
+  generatePageText,
+  generateQRCode,
+  generateTableCell,
+  renderImageToPage,
+  sanitizeHtml,
+} from './utils';
 import JsBarcode from 'jsbarcode';
+import type { PosPrintData } from '../main/models';
 
 const body = document.querySelector('#main') as HTMLElement | null;
 if (!body) {
@@ -29,7 +37,7 @@ window.electronAPI.onRenderLine(renderDataToHTML);
  * @param arg {pass argument of type PosPrintData}
  * @description Render data as HTML to page
  * */
-async function renderDataToHTML(arg: { line: any; lineIndex: number }) {
+async function renderDataToHTML(arg: { line: PosPrintData; lineIndex: number }) {
   switch (arg.line.type) {
     case 'text':
       try {
@@ -72,8 +80,8 @@ async function renderDataToHTML(arg: { line: any; lineIndex: number }) {
         mainBody.append(container);
 
         await generateQRCode(`qrCode${arg.lineIndex}`, {
-          value: arg.line.value,
-          width: arg.line.width,
+          value: arg.line.value || '',
+          width: arg.line.width ? parseInt(arg.line.width, 10) : undefined,
         });
 
         window.electronAPI.sendRenderLineReply({ status: true, error: null });
@@ -96,14 +104,14 @@ async function renderDataToHTML(arg: { line: any; lineIndex: number }) {
           barcodeWrapperEl.style.justifyContent = arg.line?.position || 'left';
         }
 
-        JsBarcode(`#barCode-${arg.lineIndex}`, arg.line.value, {
+        JsBarcode(`#barCode-${arg.lineIndex}`, arg.line.value || '', {
           // format: "",
           lineColor: '#000',
           textMargin: 0,
           fontOptions: 'bold',
           fontSize: arg.line.fontsize || 12,
-          width: parseInt(arg.line.width, 10) || 4,
-          height: parseInt(arg.line.height, 10) || 40,
+          width: arg.line.width ? parseInt(arg.line.width, 10) : 4,
+          height: arg.line.height ? parseInt(arg.line.height, 10) : 40,
           displayValue: !!arg.line.displayValue,
         });
         // send
@@ -131,31 +139,29 @@ async function renderDataToHTML(arg: { line: any; lineIndex: number }) {
       // 1. Headers
       if (arg.line.tableHeader) {
         for (const headerArg of arg.line.tableHeader) {
-          {
-            if (typeof headerArg === 'object') {
-              switch (headerArg.type) {
-                case 'image':
-                  try {
-                    const img = renderImageToPage(headerArg);
-                    const th = document.createElement(`th`);
-                    th.append(img);
-                    tHeader.append(th);
-                  } catch (e) {
-                    window.electronAPI.sendRenderLineReply({
-                      status: false,
-                      error: (e as Error).toString(),
-                    });
-                  }
-                  break;
-                case 'text':
-                  tHeader.append(generateTableCell(headerArg, 'th'));
-                  break;
-              }
-            } else {
-              const th = document.createElement(`th`);
-              th.innerHTML = sanitizeHtml(String(headerArg));
-              tHeader.append(th);
+          if (typeof headerArg === 'object') {
+            switch (headerArg.type) {
+              case 'image':
+                try {
+                  const img = renderImageToPage(headerArg);
+                  const th = document.createElement(`th`);
+                  th.append(img);
+                  tHeader.append(th);
+                } catch (e) {
+                  window.electronAPI.sendRenderLineReply({
+                    status: false,
+                    error: (e as Error).toString(),
+                  });
+                }
+                break;
+              case 'text':
+                tHeader.append(generateTableCell(headerArg, 'th'));
+                break;
             }
+          } else {
+            const th = document.createElement(`th`);
+            th.innerHTML = sanitizeHtml(String(headerArg));
+            tHeader.append(th);
           }
         }
       }
