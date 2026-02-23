@@ -13,7 +13,7 @@ ipcMain.handle('test-pos-printer-available', () => {
     console.log('posPrinter type:', typeof posPrinter);
     console.log('posPrinter.print type:', typeof posPrinter.print);
 
-    const available = typeof posPrinter === 'function' && typeof posPrinter.print === 'function';
+    const available = typeof posPrinter === 'object' && typeof posPrinter.print === 'function';
 
     return {
       success: true,

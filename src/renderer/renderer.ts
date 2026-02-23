@@ -1,6 +1,6 @@
 // oxlint-disable-next-line import/no-unassigned-import
 import './index.css';
-import { applyElementStyles, generatePageText, generateQRCode, generateTableCell, renderImageToPage } from './utils';
+import { applyElementStyles, generatePageText, generateQRCode, generateTableCell, renderImageToPage, sanitizeHtml } from './utils';
 import JsBarcode from 'jsbarcode';
 
 const body = document.querySelector('#main') as HTMLElement;
@@ -32,17 +32,16 @@ async function renderDataToHTML(arg: { line: any; lineIndex: number }) {
         // sending msg
         window.electronAPI.sendRenderLineReply({ status: true, error: null });
       } catch (e) {
-        window.electronAPI.sendRenderLineReply({ status: false, error: (e as any).toString() });
+        window.electronAPI.sendRenderLineReply({ status: false, error: (e as Error).toString() });
       }
       return;
     case 'image':
       try {
-        const img = await renderImageToPage(arg.line);
-
+        const img = renderImageToPage(arg.line);
         body.append(img);
         window.electronAPI.sendRenderLineReply({ status: true, error: null });
       } catch (e) {
-        window.electronAPI.sendRenderLineReply({ status: false, error: (e as any).toString() });
+        window.electronAPI.sendRenderLineReply({ status: false, error: (e as Error).toString() });
       }
       return;
     case 'qrCode':
@@ -74,7 +73,7 @@ async function renderDataToHTML(arg: { line: any; lineIndex: number }) {
 
         window.electronAPI.sendRenderLineReply({ status: true, error: null });
       } catch (e) {
-        window.electronAPI.sendRenderLineReply({ status: false, error: (e as any).toString() });
+        window.electronAPI.sendRenderLineReply({ status: false, error: (e as Error).toString() });
       }
       return;
     case 'barCode':
@@ -105,7 +104,7 @@ async function renderDataToHTML(arg: { line: any; lineIndex: number }) {
         // send
         window.electronAPI.sendRenderLineReply({ status: true, error: null });
       } catch (e) {
-        window.electronAPI.sendRenderLineReply({ status: false, error: (e as any).toString() });
+        window.electronAPI.sendRenderLineReply({ status: false, error: (e as Error).toString() });
       }
       return;
     case 'table':
@@ -131,18 +130,17 @@ async function renderDataToHTML(arg: { line: any; lineIndex: number }) {
             if (typeof headerArg === 'object') {
               switch (headerArg.type) {
                 case 'image':
-                  await renderImageToPage(headerArg)
-                    .then((img) => {
-                      const th = document.createElement(`th`);
-                      th.append(img);
-                      tHeader.append(th);
-                    })
-                    .catch((e) => {
-                      window.electronAPI.sendRenderLineReply({
-                        status: false,
-                        error: (e as any).toString(),
-                      });
+                  try {
+                    const img = renderImageToPage(headerArg);
+                    const th = document.createElement(`th`);
+                    th.append(img);
+                    tHeader.append(th);
+                  } catch (e) {
+                    window.electronAPI.sendRenderLineReply({
+                      status: false,
+                      error: (e as Error).toString(),
                     });
+                  }
                   break;
                 case 'text':
                   tHeader.append(generateTableCell(headerArg, 'th'));
@@ -150,7 +148,7 @@ async function renderDataToHTML(arg: { line: any; lineIndex: number }) {
               }
             } else {
               const th = document.createElement(`th`);
-              th.innerHTML = headerArg;
+              th.innerHTML = sanitizeHtml(String(headerArg));
               tHeader.append(th);
             }
           }
@@ -164,18 +162,17 @@ async function renderDataToHTML(arg: { line: any; lineIndex: number }) {
             if (typeof colArg === 'object') {
               switch (colArg.type) {
                 case 'image':
-                  await renderImageToPage(colArg)
-                    .then((img) => {
-                      const th = document.createElement(`td`);
-                      th.append(img);
-                      rowTr.append(th);
-                    })
-                    .catch((e) => {
-                      window.electronAPI.sendRenderLineReply({
-                        status: false,
-                        error: (e as any).toString(),
-                      });
+                  try {
+                    const img = renderImageToPage(colArg);
+                    const td = document.createElement(`td`);
+                    td.append(img);
+                    rowTr.append(td);
+                  } catch (e) {
+                    window.electronAPI.sendRenderLineReply({
+                      status: false,
+                      error: (e as Error).toString(),
                     });
+                  }
                   break;
                 case 'text':
                   rowTr.append(generateTableCell(colArg));
@@ -183,7 +180,7 @@ async function renderDataToHTML(arg: { line: any; lineIndex: number }) {
               }
             } else {
               const td = document.createElement(`td`);
-              td.innerHTML = colArg;
+              td.innerHTML = sanitizeHtml(String(colArg));
               rowTr.append(td);
             }
           }
@@ -196,18 +193,17 @@ async function renderDataToHTML(arg: { line: any; lineIndex: number }) {
           if (typeof footerArg === 'object') {
             switch (footerArg.type) {
               case 'image':
-                await renderImageToPage(footerArg)
-                  .then((img) => {
-                    const footerTh = document.createElement(`th`);
-                    footerTh.append(img);
-                    tFooter.append(footerTh);
-                  })
-                  .catch((e) => {
-                    window.electronAPI.sendRenderLineReply({
-                      status: false,
-                      error: (e as any).toString(),
-                    });
+                try {
+                  const img = renderImageToPage(footerArg);
+                  const footerTh = document.createElement(`th`);
+                  footerTh.append(img);
+                  tFooter.append(footerTh);
+                } catch (e) {
+                  window.electronAPI.sendRenderLineReply({
+                    status: false,
+                    error: (e as Error).toString(),
                   });
+                }
                 break;
               case 'text':
                 tFooter.append(generateTableCell(footerArg, 'th'));
@@ -215,7 +211,7 @@ async function renderDataToHTML(arg: { line: any; lineIndex: number }) {
             }
           } else {
             const footerTh = document.createElement(`th`);
-            footerTh.innerHTML = footerArg;
+            footerTh.innerHTML = sanitizeHtml(String(footerArg));
             tFooter.append(footerTh);
           }
         }

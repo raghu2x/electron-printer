@@ -21,7 +21,7 @@ yarn add electron-printer
 This library is designed for use in the **main process only**.
 
 ```js
-const { PosPrinter } = require('electron-printer');
+const { posPrinter } = require('electron-printer');
 
 const options = {
   preview: false,
@@ -55,7 +55,8 @@ const data = [
   },
 ];
 
-PosPrinter.print(data, options)
+posPrinter
+  .print(data, options)
   .then(() => console.log('Print successful'))
   .catch((error) => console.error(error));
 ```
@@ -65,7 +66,7 @@ PosPrinter.print(data, options)
 ## TypeScript Usage
 
 ```typescript
-import { PosPrinter, PosPrintData, PosPrintOptions } from 'electron-printer';
+import { posPrinter, type PosPrintData, type PosPrintOptions } from 'electron-printer';
 
 const options: PosPrintOptions = {
   preview: false,
@@ -84,7 +85,8 @@ const data: PosPrintData[] = [
   },
 ];
 
-PosPrinter.print(data, options)
+posPrinter
+  .print(data, options)
   .then(() => console.log('Done'))
   .catch((error) => console.error(error));
 ```
@@ -230,7 +232,7 @@ electron-printer/
 ├── src/
 │   ├── main/
 │   │   ├── index.ts          # Main exports
-│   │   ├── pos-printer.ts    # PosPrinter class
+│   │   ├── pos-printer.ts    # posPrinter exports
 │   │   ├── models.ts         # TypeScript interfaces
 │   │   └── utils.ts          # Helper functions
 │   ├── renderer/

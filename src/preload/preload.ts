@@ -25,7 +25,21 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   readFileAsBase64: (filePath: string): { success: boolean; data?: string; error?: string } => {
     try {
-      const data = fs.readFileSync(filePath);
+      // Validate and normalize the file path to prevent path traversal attacks
+      const normalizedPath = path.resolve(filePath);
+      const cwd = process.cwd();
+
+      // Ensure the path is within the current working directory or is an absolute path to an allowed location
+      if (!path.isAbsolute(filePath) && !normalizedPath.startsWith(cwd)) {
+        return { success: false, error: 'Access denied: Invalid file path' };
+      }
+
+      // Check that the file exists before reading
+      if (!fs.existsSync(normalizedPath)) {
+        return { success: false, error: 'File not found' };
+      }
+
+      const data = fs.readFileSync(normalizedPath);
       return { success: true, data: data.toString('base64') };
     } catch (e) {
       return { success: false, error: (e as Error).message };

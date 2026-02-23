@@ -45,6 +45,7 @@
   },
   "dependencies": {
     "@devraghu/cashdrawer": "^0.3.0",
+    "dompurify": "^3.3.1",
     "jsbarcode": "^3.12.3",
     "qrcode": "^1.5.4"
   },

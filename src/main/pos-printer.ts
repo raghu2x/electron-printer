@@ -8,44 +8,33 @@ if (process.type === 'renderer') {
   throw new Error('electron-pos-printer: this module must be used in the main process only');
 }
 
-const renderPrintDocument = (window: BrowserWindow, data: PosPrintData[]): Promise<{ message: string }> => {
-  return new Promise(async (resolve, reject) => {
-    for (const [lineIndex, line] of data.entries()) {
-      // ========== VALIDATION =========
-      /**
-       * Throw an error if image is set without path or url.
-       */
-      if (line.type === 'image' && !line.path && !line.url) {
-        window.close();
-        reject(new Error('An Image url/path is required for type image').toString());
-        break;
-      }
-      /**
-       * line.style is no longer a string but an object, throw and error if a use still sets a string
-       *
-       */
-      if (!!line.style && typeof line.style !== 'object') {
-        window.close();
-        reject(
-          new Error('`options.styles` at "' + line.style + '" should be an object. Example: {style: {fontSize: 12}}'),
-        );
-        break;
-      }
-
-      await sendIpcMsg('render-line', window.webContents, { line, lineIndex })
-        .then((result: any) => {
-          if (!result.status) {
-            window.close();
-            reject(result.error);
-          }
-        })
-        .catch((error) => {
-          reject(error);
-        });
+const renderPrintDocument = async (window: BrowserWindow, data: PosPrintData[]): Promise<{ message: string }> => {
+  for (const [lineIndex, line] of data.entries()) {
+    // ========== VALIDATION =========
+    /**
+     * Throw an error if image is set without path or url.
+     */
+    if (line.type === 'image' && !line.path && !line.url) {
+      window.close();
+      throw new Error('An Image url/path is required for type image');
     }
-    // when the render process is done rendering the page, resolve
-    resolve({ message: 'page-rendered' });
-  });
+    /**
+     * line.style is no longer a string but an object, throw and error if a use still sets a string
+     *
+     */
+    if (!!line.style && typeof line.style !== 'object') {
+      window.close();
+      throw new Error('`options.styles` at "' + line.style + '" should be an object. Example: {style: {fontSize: 12}}');
+    }
+
+    const result = await sendIpcMsg('render-line', window.webContents, { line, lineIndex }) as { status: boolean; error?: string };
+    if (!result.status) {
+      window.close();
+      throw new Error(result.error || 'Failed to render line');
+    }
+  }
+  // when the render process is done rendering the page, resolve
+  return { message: 'page-rendered' };
 };
 
 const print = (data: PosPrintData[], options: PosPrintOptions): Promise<PrintResult> => {

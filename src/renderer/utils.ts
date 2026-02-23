@@ -1,14 +1,26 @@
 import type { PosPrintData, PrintDataStyle } from '../main/models';
 import QRCode, { QRCodeRenderersOptions } from 'qrcode';
+import DOMPurify from 'dompurify';
 
 type PageElement = HTMLElement | HTMLDivElement | HTMLImageElement;
+
+/**
+ * Sanitize HTML string to prevent XSS attacks
+ * Uses DOMPurify with a whitelist of safe tags for receipt printing
+ */
+export function sanitizeHtml(html: string): string {
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: ['b', 'i', 'u', 'strong', 'em', 'br', 'span', 'p', 'div'],
+    ALLOWED_ATTR: ['style', 'class'],
+  });
+}
 /**
  * @param arg {pass argument of type PosPrintData}
  * @description used for type text, used to generate type text
  * */
 export function generatePageText(arg: PosPrintData): HTMLElement {
   const div = applyElementStyles(document.createElement('div'), arg.style!) as HTMLElement;
-  div.innerHTML = arg.value!;
+  div.innerHTML = sanitizeHtml(arg.value || '');
 
   return div;
 }
@@ -22,7 +34,7 @@ export function generateTableCell(arg: PosPrintData, type = 'td'): HTMLElement {
     padding: '7px 2px',
     ...arg.style,
   });
-  cellElement.innerHTML = arg.value!;
+  cellElement.innerHTML = sanitizeHtml(arg.value || '');
 
   return cellElement;
 }
@@ -30,90 +42,78 @@ export function generateTableCell(arg: PosPrintData, type = 'td'): HTMLElement {
  * @param arg {pass argument of type PosPrintData}
  * @description get image from path and return it as a html img
  * */
-export function renderImageToPage(arg: PosPrintData): Promise<HTMLElement> {
-  return new Promise(async (resolve, reject) => {
-    // Check if string is a valid base64, if yes, send the file url directly
-    let uri: string | undefined;
+export function renderImageToPage(arg: PosPrintData): HTMLElement {
+  const image_format = [
+    'apng',
+    'bmp',
+    'gif',
+    'ico',
+    'cur',
+    'jpeg',
+    'jpg',
+    'jpeg',
+    'jfif',
+    'pjpeg',
+    'pjp',
+    'png',
+    'svg',
+    'tif',
+    'tiff',
+    'webp',
+  ];
 
-    const image_format = [
-      'apng',
-      'bmp',
-      'gif',
-      'ico',
-      'cur',
-      'jpeg',
-      'jpg',
-      'jpeg',
-      'jfif',
-      'pjpeg',
-      'pjp',
-      'png',
-      'svg',
-      'tif',
-      'tiff',
-      'webp',
-    ];
+  const img_con = applyElementStyles(document.createElement('div'), {
+    width: '100%',
+    display: 'flex',
+    justifyContent: arg?.position || 'left',
+  }) as HTMLDivElement;
 
-    const img_con = applyElementStyles(document.createElement('div'), {
-      width: '100%',
-      display: 'flex',
-      justifyContent: arg?.position || 'left',
-    }) as HTMLDivElement;
+  let uri: string | undefined;
 
-    if (arg.url) {
-      const isImageBase64 = isBase64(arg.url);
-      if (!isValidHttpUrl(arg.url) && !isImageBase64) {
-        reject(`Invalid url: ${arg.url}`);
-      }
-      if (isImageBase64) {
-        uri = 'data:image/png;base64,' + arg.url;
-      } else {
-        uri = arg.url;
-      }
-    } else if (arg.path) {
-      // file must be read via preload API
-      try {
-        const result = await window.electronAPI.readFileAsBase64(arg.path);
-        if (!result.success) {
-          reject(new Error(result.error));
-          return;
-        }
-        let ext = window.electronAPI.getFileExtension(arg.path);
-        if (image_format.indexOf(ext) === -1) {
-          reject(new Error(ext + ' file type not supported, consider the types: ' + image_format.join()));
-          return;
-        }
-        if (ext === 'svg') {
-          ext = 'svg+xml';
-        }
-        // insert image
-        uri = 'data:image/' + ext + ';base64,' + result.data;
-      } catch (e) {
-        reject(e);
-        return;
-      }
+  if (arg.url) {
+    const isImageBase64 = isBase64(arg.url);
+    if (!isValidHttpUrl(arg.url) && !isImageBase64) {
+      throw new Error(`Invalid url: ${arg.url}`);
+    }
+    if (isImageBase64) {
+      uri = 'data:image/png;base64,' + arg.url;
     } else {
-      reject(new Error('Image requires either a valid url or path property'));
-      return;
+      uri = arg.url;
     }
-
-    if (!uri) {
-      reject(new Error('Failed to generate image URI'));
-      return;
+  } else if (arg.path) {
+    // file must be read via preload API
+    const result = window.electronAPI.readFileAsBase64(arg.path);
+    if (!result.success) {
+      throw new Error(result.error);
     }
+    let ext = window.electronAPI.getFileExtension(arg.path);
+    if (image_format.indexOf(ext) === -1) {
+      throw new Error(ext + ' file type not supported, consider the types: ' + image_format.join());
+    }
+    if (ext === 'svg') {
+      ext = 'svg+xml';
+    }
+    // insert image
+    uri = 'data:image/' + ext + ';base64,' + result.data;
+  } else {
+    throw new Error('Image requires either a valid url or path property');
+  }
 
-    const img = applyElementStyles(document.createElement('img'), {
-      height: arg.height,
-      width: arg.width,
-      ...arg.style,
-    }) as HTMLImageElement;
+  if (!uri) {
+    throw new Error('Failed to generate image URI');
+  }
 
-    img.src = uri;
+  const img = applyElementStyles(document.createElement('img'), {
+    height: arg.height,
+    width: arg.width,
+    ...arg.style,
+  }) as HTMLImageElement;
 
-    // appending
-    img_con.prepend(img);
-    resolve(img_con);
-  });
+  img.src = uri;
+
+  // appending
+  img_con.prepend(img);
+  return img_con;
 }
 
 /**
@@ -169,22 +169,16 @@ export function isValidHttpUrl(url: string) {
 export function generateQRCode(elementId: string, qrOptions: { value: string; width?: number }) {
   const { value, width = 1 } = qrOptions;
 
-  return new Promise((resolve, reject) => {
-    const element = document.querySelector(`#${elementId}`) as HTMLCanvasElement;
-    const canvasOptions: QRCodeRenderersOptions = {
-      width,
-      // height,
-      errorCorrectionLevel: 'H',
-      color: {
-        dark: '#000',
-        light: '#fff',
-      },
-    };
+  const element = document.querySelector(`#${elementId}`) as HTMLCanvasElement;
+  const canvasOptions: QRCodeRenderersOptions = {
+    width,
+    // height,
+    errorCorrectionLevel: 'H',
+    color: {
+      dark: '#000',
+      light: '#fff',
+    },
+  };
 
-    QRCode.toCanvas(element, value, canvasOptions)
-      .then(resolve)
-      .catch((error: unknown) => {
-        reject(error);
-      });
-  });
+  return QRCode.toCanvas(element, value, canvasOptions);
 }

@@ -39,7 +39,7 @@ test.describe('Printer Functionality Tests', () => {
     await electronApp.close();
   });
 
-  test('should have PosPrinter available in main process', async () => {
+  test('should have posPrinter available in main process', async () => {
     const checkResult = (await window.evaluate(async () => {
       const api = globalThis.window.electronDemoAPI;
       return await api.invoke('test-pos-printer-available');
