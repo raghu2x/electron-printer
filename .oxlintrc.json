@@ -1,0 +1,49 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "import", "unicorn", "oxc"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "nursery": "error",
+    "perf": "error",
+    "pedantic": "error"
+    // "style": "warn"
+    // "restriction": "error",
+  },
+  "rules": {
+    "max-depth": "off",
+    "max-lines": "off",
+    "max-lines-per-function": "off",
+    "no-async-promise-executor": "off",
+    "no-await-in-loop": "off",
+    "no-loop-func": "off",
+    "no-case-declarations": "off",
+    "no-unused-vars": [
+      "error",
+      {
+        // "ignoreClassWithStaticInitBlock": true,
+        "ignoreRestSiblings": true,
+        "varsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_"
+      }
+    ]
+  },
+  "settings": {
+    "jsdoc": {
+      "ignorePrivate": false,
+      "ignoreInternal": false,
+      "ignoreReplacesDocs": true,
+      "overrideReplacesDocs": true,
+      "augmentsExtendsReplacesDocs": false,
+      "implementsReplacesDocs": false,
+      "exemptDestructuredRootsFromChecks": false,
+      "tagNamePreference": {}
+    }
+  },
+  "env": {
+    "builtin": true,
+    "browser": true,
+    "node": true
+  },
+  "ignorePatterns": ["dist/**", "coverage/**", "vendor/**", "node_modules/**"]
+}

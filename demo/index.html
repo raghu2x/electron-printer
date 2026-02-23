@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0"
+    />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Electron Pos Printer Demo</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        padding: 20px;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      .title {
+        font-size: 24px;
+        margin-bottom: 20px;
+      }
+      .section {
+        background: #f5f5f5;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+      }
+      .section h2 {
+        margin-top: 0;
+        font-size: 18px;
+        color: #333;
+      }
+      .btn {
+        font-size: 14px;
+        background-color: #3caf50;
+        color: white;
+        padding: 10px 16px;
+        border-radius: 4px;
+        margin: 5px 5px 5px 0;
+        border: none;
+        cursor: pointer;
+      }
+      .btn:hover {
+        background-color: #2d9440;
+      }
+      .btn-secondary {
+        background-color: #2196f3;
+      }
+      .btn-secondary:hover {
+        background-color: #1976d2;
+      }
+      .btn-warning {
+        background-color: #ff9800;
+      }
+      .btn-warning:hover {
+        background-color: #f57c00;
+      }
+      select {
+        padding: 10px;
+        font-size: 14px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+        margin-right: 10px;
+        min-width: 200px;
+      }
+      .form-group {
+        margin-bottom: 15px;
+      }
+      .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
+      }
+      .result {
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 10px;
+        margin-top: 10px;
+        font-family: monospace;
+        font-size: 12px;
+        white-space: pre-wrap;
+        max-height: 200px;
+        overflow-y: auto;
+      }
+      .options-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+      }
+      .options-grid label {
+        font-size: 13px;
+      }
+      .options-grid input {
+        width: 60px;
+        padding: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1 class="title">Electron POS Printer Demo</h1>
+
+    <!-- Print Section -->
+    <div class="section">
+      <h2>Receipt Printing</h2>
+      <button class="btn" onclick="sendTestPrint()">Print Test Receipt</button>
+    </div>
+
+    <!-- Printer List Section -->
+    <div class="section">
+      <h2>Available Printers</h2>
+      <button class="btn btn-secondary" onclick="loadPrinters()">Refresh Printer List</button>
+      <div class="form-group" style="margin-top: 15px">
+        <label for="printerSelect">Select Printer:</label>
+        <select id="printerSelect">
+          <option value="">-- Click "Refresh Printer List" --</option>
+        </select>
+      </div>
+      <div id="printerResult" class="result" style="display: none"></div>
+    </div>
+
+    <!-- Cash Drawer Section -->
+    <div class="section">
+      <h2>Cash Drawer</h2>
+      <p style="color: #666; margin-bottom: 15px">
+        Open a cash drawer connected to the selected printer using ESC/POS commands.
+      </p>
+      <div class="options-grid">
+        <div>
+          <label for="drawerPin">Drawer Pin (0 or 1):</label>
+          <input type="number" id="drawerPin" value="0" min="0" max="1" />
+        </div>
+        <div>
+          <label for="pulseOn">Pulse On Time (0-255):</label>
+          <input type="number" id="pulseOn" value="50" min="0" max="255" />
+        </div>
+        <div>
+          <label for="pulseOff">Pulse Off Time (0-255):</label>
+          <input type="number" id="pulseOff" value="250" min="0" max="255" />
+        </div>
+      </div>
+      <div style="margin-top: 15px">
+        <button class="btn btn-warning" onclick="openDrawer()">Open Cash Drawer</button>
+      </div>
+      <div id="drawerResult" class="result" style="display: none"></div>
+    </div>
+
+    <script>
+      // Print test receipt
+      function sendTestPrint() {
+        window.electronDemoAPI.sendTestPrint();
+      }
+
+      // Load available printers
+      async function loadPrinters() {
+        const resultDiv = document.getElementById('printerResult');
+        const select = document.getElementById('printerSelect');
+
+        resultDiv.style.display = 'block';
+        resultDiv.textContent = 'Loading printers...';
+
+        try {
+          const response = await window.electronDemoAPI.getPrinters();
+
+          if (response.success) {
+            const printers = response.printers;
+
+            // Clear and populate select
+            select.innerHTML = '';
+            if (printers.length === 0) {
+              select.innerHTML = '<option value="">No printers found</option>';
+            } else {
+              printers.forEach((printer) => {
+                const option = document.createElement('option');
+                option.value = printer.name;
+                option.textContent = `${printer.name}${printer.default ? ' (Default)' : ''} - ${printer.status}`;
+                select.appendChild(option);
+              });
+            }
+
+            // Show detailed info
+            resultDiv.textContent = JSON.stringify(printers, null, 2);
+          } else {
+            resultDiv.textContent = 'Error: ' + response.error;
+          }
+        } catch (error) {
+          resultDiv.textContent = 'Error: ' + error.message;
+        }
+      }
+
+      // Open cash drawer
+      async function openDrawer() {
+        const resultDiv = document.getElementById('drawerResult');
+        const printerName = document.getElementById('printerSelect').value;
+        const pin = parseInt(document.getElementById('drawerPin').value) || 0;
+        const pulseOnTime = parseInt(document.getElementById('pulseOn').value) || 50;
+        const pulseOffTime = parseInt(document.getElementById('pulseOff').value) || 250;
+
+        resultDiv.style.display = 'block';
+
+        if (!printerName) {
+          resultDiv.textContent =
+            'Error: Please select a printer first. Click "Refresh Printer List" to load available printers.';
+          return;
+        }
+
+        resultDiv.textContent = `Opening cash drawer on "${printerName}"...`;
+
+        try {
+          const result = await window.electronDemoAPI.openCashDrawer(printerName, {
+            pin,
+            pulseOnTime,
+            pulseOffTime,
+          });
+
+          if (result.success) {
+            resultDiv.textContent = 'Cash drawer opened successfully!';
+          } else {
+            resultDiv.textContent = `Error: ${result.errorMessage}\nError Code: ${result.errorCode}`;
+          }
+        } catch (error) {
+          resultDiv.textContent = 'Error: ' + error.message;
+        }
+      }
+
+      // Load printers on page load
+      window.addEventListener('DOMContentLoaded', () => {
+        loadPrinters();
+      });
+    </script>
+  </body>
+</html>
