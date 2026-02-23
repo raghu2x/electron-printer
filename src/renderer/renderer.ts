@@ -3,13 +3,18 @@ import './index.css';
 import { applyElementStyles, generatePageText, generateQRCode, generateTableCell, renderImageToPage, sanitizeHtml } from './utils';
 import JsBarcode from 'jsbarcode';
 
-const body = document.querySelector('#main') as HTMLElement;
+const body = document.querySelector('#main') as HTMLElement | null;
+if (!body) {
+  throw new Error('Main element (#main) not found in document');
+}
+const mainBody: HTMLElement = body;
+
 /**
  * Initialize container in html view, by setting the width and margins specified in the PosPrinter options
  */
 window.electronAPI.onBodyInit(function (arg) {
-  body.style.width = arg?.width || '100%';
-  body.style.margin = arg?.margin || '0';
+  mainBody.style.width = arg?.width || '100%';
+  mainBody.style.margin = arg?.margin || '0';
 
   window.electronAPI.sendBodyInitReply({ status: true, error: null });
 });
@@ -28,7 +33,7 @@ async function renderDataToHTML(arg: { line: any; lineIndex: number }) {
   switch (arg.line.type) {
     case 'text':
       try {
-        body.append(generatePageText(arg.line));
+        mainBody.append(generatePageText(arg.line));
         // sending msg
         window.electronAPI.sendRenderLineReply({ status: true, error: null });
       } catch (e) {
@@ -38,7 +43,7 @@ async function renderDataToHTML(arg: { line: any; lineIndex: number }) {
     case 'image':
       try {
         const img = renderImageToPage(arg.line);
-        body.append(img);
+        mainBody.append(img);
         window.electronAPI.sendRenderLineReply({ status: true, error: null });
       } catch (e) {
         window.electronAPI.sendRenderLineReply({ status: false, error: (e as Error).toString() });
@@ -64,7 +69,7 @@ async function renderDataToHTML(arg: { line: any; lineIndex: number }) {
         });
 
         container.append(qrCode);
-        body.append(container);
+        mainBody.append(container);
 
         await generateQRCode(`qrCode${arg.lineIndex}`, {
           value: arg.line.value,
@@ -82,7 +87,7 @@ async function renderDataToHTML(arg: { line: any; lineIndex: number }) {
         const barcodeEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         barcodeEl.setAttributeNS(null, 'id', `barCode-${arg.lineIndex}`);
         barcodeWrapperEl.append(barcodeEl);
-        body.append(barcodeWrapperEl);
+        mainBody.append(barcodeWrapperEl);
 
         if (arg.line?.style) {
           applyElementStyles(barcodeWrapperEl, arg.line.style);
@@ -221,7 +226,7 @@ async function renderDataToHTML(arg: { line: any; lineIndex: number }) {
       table.append(tBody);
       table.append(tFooter);
       tableContainer.append(table);
-      body.append(tableContainer);
+      mainBody.append(tableContainer);
       // send
       window.electronAPI.sendRenderLineReply({ status: true, error: null });
   }

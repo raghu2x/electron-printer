@@ -27,7 +27,10 @@ const renderPrintDocument = async (window: BrowserWindow, data: PosPrintData[]):
       throw new Error('`options.styles` at "' + line.style + '" should be an object. Example: {style: {fontSize: 12}}');
     }
 
-    const result = await sendIpcMsg('render-line', window.webContents, { line, lineIndex }) as { status: boolean; error?: string };
+    const result = (await sendIpcMsg('render-line', window.webContents, { line, lineIndex })) as {
+      status: boolean;
+      error?: string;
+    };
     if (!result.status) {
       window.close();
       throw new Error(result.error || 'Failed to render line');
@@ -54,11 +57,11 @@ const print = (data: PosPrintData[], options: PosPrintOptions): Promise<PrintRes
     if (typeof options.pageSize === 'object' && (!options.pageSize.height || !options.pageSize.width)) {
       reject(new Error('height and width properties are required for options.pageSize'));
     }
-    // If the job has been printer or not
+    // If the job has been printed or not
     let printedState = false;
     // The error returned if the printing fails
-    let window_print_error: any = null;
-    let timeOut = options.timeOutPerLine ? options.timeOutPerLine * data.length + 200 : 400 * data.length + 200;
+    let windowPrintError: Error | null = null;
+    const timeOut = options.timeOutPerLine ? options.timeOutPerLine * data.length + 200 : 400 * data.length + 200;
 
     /**
      * If in live mode i.e. `options.preview` is false & if `options.silent` is false
@@ -75,7 +78,7 @@ const print = (data: PosPrintData[], options: PosPrintOptions): Promise<PrintRes
     if (!options.preview && !options.silent) {
       setTimeout(() => {
         if (!printedState) {
-          const errorMsg = window_print_error || '[TimedOutError] Make sure your printer is connected';
+          const errorMsg = windowPrintError || new Error('[TimedOutError] Make sure your printer is connected');
           reject(errorMsg);
           printedState = true;
         }
@@ -99,23 +102,14 @@ const print = (data: PosPrintData[], options: PosPrintOptions): Promise<PrintRes
       },
     });
 
-    // If the mainWindow is closed, reset the `mainWindow` var to null
+    // Clean up when the mainWindow is closed
     mainWindow.on('closed', () => {
-      (mainWindow as any) = null;
+      mainWindow = null as unknown as BrowserWindow;
     });
 
     mainWindow.loadFile(options.pathTemplate || join(__dirname, 'renderer/index.html'));
 
     mainWindow.webContents.on('did-finish-load', async () => {
-      // get system printers
-      // const system_printers = mainWindow.webContents.getPrinters();
-      // const printer_index = system_printers.findIndex(sp => sp.name === options.printerName);
-      // // if system printer isn't found!!
-      // if (!options.preview && printer_index == -1) {
-      //     reject(new Error(options.printerName + ' not found. Check if this printer was added to your computer or try updating your drivers').toString());
-      //     return;
-      // }
-      // else start initialize render process page
       await sendIpcMsg('body-init', mainWindow.webContents, options);
       /**
        * Render print data as html in the mainWindow render process
@@ -172,13 +166,13 @@ const print = (data: PosPrintData[], options: PosPrintOptions): Promise<PrintRes
               ...(options.duplexMode && { duplexMode: options.duplexMode }),
               ...(options.dpi && { dpi: options.dpi }),
             },
-            (arg, err) => {
-              if (err) {
-                window_print_error = err;
-                reject(err);
+            (success, failureReason) => {
+              if (failureReason) {
+                windowPrintError = new Error(failureReason);
+                reject(windowPrintError);
               }
               if (!printedState) {
-                resolve({ complete: arg, options });
+                resolve({ complete: success, options });
                 printedState = true;
               }
               mainWindow.close();
