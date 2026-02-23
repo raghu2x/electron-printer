@@ -35,13 +35,17 @@
     }
   },
   "scripts": {
-    "test": "npx playwright test",
-    "start": "npm run build && npm run demo",
+    "test": "playwright test",
     "demo": "electron ./demo/",
     "build": "webpack",
     "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
     "fmt": "oxfmt",
-    "fmt:check": "oxfmt --check"
+    "fmt:check": "oxfmt --check",
+    "clean": "git clean -fx ./dist",
+    "prebuild": "npm run clean",
+    "type-check": "tsc --noEmit",
+    "prepare": "husky"
   },
   "dependencies": {
     "@devraghu/cashdrawer": "^0.3.0",
@@ -58,6 +62,8 @@
     "css-minimizer-webpack-plugin": "^7.0.4",
     "electron": "^40.4.1",
     "html-webpack-plugin": "^5.6.6",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
     "mini-css-extract-plugin": "^2.10.0",
     "oxfmt": "^0.34.0",
     "oxlint": "^1.49.0",
@@ -71,6 +77,12 @@
   },
   "peerDependencies": {
     "electron": ">=30.0.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "oxlint --fix",
+      "oxfmt"
+    ]
   },
   "engines": {
     "node": "^24 || ^22 || ^20",
