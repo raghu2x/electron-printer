@@ -1,19 +1,19 @@
-![License](https://img.shields.io/npm/l/@devraghu/cashdrawer)
-![Version](https://img.shields.io/npm/v/@devraghu/cashdrawer?label=version)
-![downloads](https://img.shields.io/npm/dm/@devraghu/cashdrawer)
+![License](https://img.shields.io/npm/l/@devraghu/electron-printer)
+![Version](https://img.shields.io/npm/v/@devraghu/electron-printer?label=version)
+![downloads](https://img.shields.io/npm/dm/@devraghu/electron-printer)
 
 # Electron-printer
 
-An Electron.js plugin for thermal receipt printers. Supports 80mm, 78mm, 76mm, 58mm, 57mm, and 44mm printers.
+An Electron.js plugin for thermal receipt printers and cash drawers. Supports 80mm, 78mm, 76mm, 58mm, 57mm, and 44mm printers with cash drawer integration.
 
 **Requirements:** Electron >= 30.x.x
 
 ## Installation
 
 ```bash
-npm install electron-printer
+npm install @devraghu/electron-printer
 # or
-yarn add electron-printer
+yarn add @devraghu/electron-printer
 ```
 
 ## Quick Start
@@ -21,7 +21,7 @@ yarn add electron-printer
 This library is designed for use in the **main process only**.
 
 ```js
-const { posPrinter } = require('electron-printer');
+const { posPrinter } = require('@devraghu/electron-printer');
 
 const options = {
   preview: false,
@@ -66,7 +66,7 @@ posPrinter
 ## TypeScript Usage
 
 ```typescript
-import { posPrinter, type PosPrintData, type PosPrintOptions } from 'electron-printer';
+import { posPrinter, type PosPrintData, type PosPrintOptions, type PrintResult } from '@devraghu/electron-printer';
 
 const options: PosPrintOptions = {
   preview: false,
@@ -225,6 +225,36 @@ Tables can contain text and images in cells:
 | `tableBodyStyle`   | `object`                     | Body styling                                            |
 | `tableFooterStyle` | `object`                     | Footer styling                                          |
 
+## Additional Features
+
+### Get Available Printers
+
+Retrieve a list of all available printers on the system:
+
+```typescript
+import { posPrinter } from '@devraghu/electron-printer';
+
+const printers = posPrinter.getPrinters();
+console.log(printers);
+// [{ name: 'XP-80C', isDefault: true, ... }, ...]
+```
+
+### Cash Drawer
+
+Open a cash drawer connected to a thermal printer:
+
+```typescript
+import { posPrinter } from '@devraghu/electron-printer';
+
+// Open cash drawer on specific printer
+posPrinter
+  .openCashDrawer('XP-80C')
+  .then(() => console.log('Cash drawer opened'))
+  .catch((error) => console.error('Failed to open cash drawer:', error));
+```
+
+---
+
 ## Project Structure
 
 ```
@@ -240,8 +270,7 @@ electron-printer/
 │   │   ├── utils.ts          # HTML generation
 │   │   └── index.html        # Print template
 │   └── preload/
-│       ├── preload.ts        # Preload script
-│       └── types.ts          # Preload API types
+│       └── preload.ts        # Preload script with API types
 ├── demo/                     # Demo application
 ├── test/                     # Playwright E2E tests
 └── dist/                     # Compiled output
