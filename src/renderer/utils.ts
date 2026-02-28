@@ -166,13 +166,12 @@ export function renderImageToPage(arg: PosPrintData): HTMLElement {
  * @param options
  * @description Generate QR in page
  * */
-export function generateQRCode(elementId: string, qrOptions: { value: string; width?: number }): Promise<void> {
-  const { value, width = 1 } = qrOptions;
+export function generateQRCode(elementId: string, qrOptions: { value: string; width: number }): Promise<void> {
+  const { value, width } = qrOptions;
 
   const element = document.querySelector(`#${elementId}`) as HTMLCanvasElement;
   const canvasOptions: QRCodeRenderersOptions = {
     width,
-    // height,
     errorCorrectionLevel: 'H',
     color: {
       dark: '#000',

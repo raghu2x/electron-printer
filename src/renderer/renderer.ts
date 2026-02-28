@@ -220,7 +220,7 @@ async function renderDataToHTML(arg: { line: PosPrintData; lineIndex: number }):
 
         await generateQRCode(`qrCode${arg.lineIndex}`, {
           value: arg.line.value || '',
-          width: arg.line.width ? Number.parseInt(arg.line.width, 10) : undefined,
+          width: arg.line.width ? Number.parseInt(arg.line.width, 10) : 55,
         });
 
         window.electronAPI.sendRenderLineReply({ status: true, error: null });

@@ -6,26 +6,23 @@
     "suspicious": "error",
     "nursery": "error",
     "perf": "error",
-    "pedantic": "error"
-    // "restriction": "error"
+    "pedantic": "error",
+    "restriction": "error"
     // "style": "warn"
   },
   "rules": {
     "no-rest-spread-properties": "off",
     "no-optional-chaining": "off",
     "no-async-await": "off",
+    "import/no-relative-parent-imports": "off",
+    "import/no-default-export": "off",
 
     "max-depth": "off",
-    "max-lines": "off",
     "max-lines-per-function": "off",
-    "no-async-promise-executor": "off",
     "no-await-in-loop": "off",
-    "no-loop-func": "off",
-    "no-case-declarations": "off",
     "no-unused-vars": [
       "error",
       {
-        // "ignoreClassWithStaticInitBlock": true,
         "ignoreRestSiblings": true,
         "varsIgnorePattern": "^_",
         "caughtErrorsIgnorePattern": "^_"
@@ -49,5 +46,5 @@
     "browser": true,
     "node": true
   },
-  "ignorePatterns": ["dist/**", "coverage/**", "vendor/**", "node_modules/**"]
+  "ignorePatterns": ["dist/**", "coverage/**", "vendor/**", "node_modules/**", "demo/preload.cjs"]
 }

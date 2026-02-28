@@ -1,6 +1,7 @@
+// oxlint-disable no-console
 import { app, BrowserWindow, ipcMain, screen } from 'electron';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { posPrinter } from '../dist/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
