@@ -1,11 +1,7 @@
 // oxlint-disable no-console
 import { app, BrowserWindow, ipcMain, screen } from 'electron';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { posPrinter } from '../dist/index.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // Test IPC handlers for Playwright tests
 ipcMain.handle('test-pos-printer-available', () => {
@@ -60,7 +56,7 @@ const createWindow = () => {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path.join(__dirname, 'preload.cjs'),
+      preload: path.join(import.meta.dirname, 'preload.cjs'),
     },
   });
 

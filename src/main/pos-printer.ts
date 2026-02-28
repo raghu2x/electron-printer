@@ -101,7 +101,7 @@ const print = (data: PosPrintData[], options: PosPrintOptions): Promise<PrintRes
         nodeIntegration: false,
         contextIsolation: true,
         sandbox: false,
-        preload: join(__dirname, 'preload/preload.cjs'),
+        preload: join(import.meta.dirname, 'preload/preload.cjs'),
       },
     });
 
@@ -110,7 +110,7 @@ const print = (data: PosPrintData[], options: PosPrintOptions): Promise<PrintRes
       mainWindow = null;
     });
 
-    mainWindow.loadFile(options.pathTemplate || join(__dirname, 'renderer/index.html'));
+    mainWindow.loadFile(options.pathTemplate || join(import.meta.dirname, 'renderer/index.html'));
 
     mainWindow.webContents.on('did-finish-load', async () => {
       if (!mainWindow) {
