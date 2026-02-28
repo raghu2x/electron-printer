@@ -27,7 +27,7 @@ const renderPrintDocument = async (window: BrowserWindow, data: PosPrintData[]):
      * line.style is no longer a string but an object, throw and error if a use still sets a string
      *
      */
-    if (!!line.style && typeof line.style !== 'object') {
+    if (line.style && typeof line.style !== 'object') {
       window.close();
       throw new Error('`options.styles` at "' + line.style + '" should be an object. Example: {style: {fontSize: 12}}');
     }
@@ -55,10 +55,12 @@ const print = (data: PosPrintData[], options: PosPrintOptions): Promise<PrintRes
     // 1. Reject if printer name is not set in live mode
     if (!options.preview && !options.printerName && !options.silent) {
       reject(new Error("A printer name is required, if you don't want to specify a printer name, set silent to true"));
+      return;
     }
     // 2. Reject if pageSize is object and pageSize.height or pageSize.width is not set
     if (typeof options.pageSize === 'object' && (!options.pageSize.height || !options.pageSize.width)) {
       reject(new Error('height and width properties are required for options.pageSize'));
+      return;
     }
     // If the job has been printed or not
     let printedState = false;

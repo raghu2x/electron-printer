@@ -9,7 +9,7 @@ import {
   sanitizeHtml,
 } from './utils';
 import JsBarcode from 'jsbarcode';
-import type { PosPrintData, PosPrintOptions } from '../main/models';
+import type { PosPrintData, PosPrintBarCodeData, PosPrintTableData, PosPrintOptions } from '../main/models';
 
 const body = document.querySelector('#main') as HTMLElement | null;
 if (!body) {
@@ -18,21 +18,21 @@ if (!body) {
 const mainBody: HTMLElement = body;
 
 /**
- * Renders a barcode element from PosPrintData
+ * Renders a barcode element from PosPrintBarCodeData
  * @param line - print data containing barcode value and style
  * @param lineIndex - index for unique element IDs
  */
-function renderBarCodeToPage(line: PosPrintData, lineIndex: number): HTMLDivElement {
+function renderBarCodeToPage(line: PosPrintBarCodeData, lineIndex: number): HTMLDivElement {
   const barcodeWrapperEl = document.createElement('div');
   const barcodeEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   barcodeEl.setAttributeNS(null, 'id', `barCode-${lineIndex}`);
   barcodeWrapperEl.append(barcodeEl);
 
-  if (line?.style) {
+  if (line.style) {
     applyElementStyles(barcodeWrapperEl, line.style);
   } else {
     barcodeWrapperEl.style.display = 'flex';
-    barcodeWrapperEl.style.justifyContent = line?.position ?? 'left';
+    barcodeWrapperEl.style.justifyContent = line.position ?? 'left';
   }
 
   // Skip rendering if barcode has no value (JsBarcode requires a non-empty string)
@@ -54,11 +54,11 @@ function renderBarCodeToPage(line: PosPrintData, lineIndex: number): HTMLDivElem
 }
 
 /**
- * Renders a table element from PosPrintData
+ * Renders a table element from PosPrintTableData
  * @param line - print data containing table structure and styles
  * @param lineIndex - index for unique element IDs
  */
-function renderTableToPage(line: PosPrintData, lineIndex: number): HTMLDivElement {
+function renderTableToPage(line: PosPrintTableData, lineIndex: number): HTMLDivElement {
   const tableContainer = document.createElement('div');
   tableContainer.setAttribute('id', `table-container-${lineIndex}`);
 
@@ -198,9 +198,6 @@ async function renderDataToHTML(arg: { line: PosPrintData; lineIndex: number }):
 
         if (arg.line?.style) {
           applyElementStyles(container, arg.line.style);
-        } else {
-          container.style.display = 'flex';
-          container.style.justifyContent = arg.line?.position || 'left';
         }
 
         const qrCode = document.createElement('canvas');
@@ -239,7 +236,7 @@ async function renderDataToHTML(arg: { line: PosPrintData; lineIndex: number }):
       } catch (e) {
         window.electronAPI.sendRenderLineReply({ status: false, error: (e as Error).toString() });
       }
-      break;
+      return;
     default:
       window.electronAPI.sendRenderLineReply({
         status: false,

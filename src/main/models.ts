@@ -30,47 +30,66 @@ export interface PosPrintOptions extends Omit<WebContentsPrintOptions, 'pageSize
 /** Alignment for barCode and qrCode */
 export declare type PosPrintPosition = 'left' | 'center' | 'right';
 
-export interface PosPrintTableField {
-  type: 'text' | 'image';
-  value?: string;
-  path?: string;
-  style?: PrintDataStyle;
+export type PosPrintTableField = PosPrintImageData | PosPrintTextData;
 
-  // for type image
-  width?: string;
-  height?: string;
+/** Base properties shared by all print data types */
+interface PosPrintDataBase {
+  style?: PrintDataStyle;
 }
 
-export interface PosPrintData {
-  type: PosPrintType;
-  value?: string;
-  style?: PrintDataStyle;
+/** Text content for printing */
+export interface PosPrintTextData extends PosPrintDataBase {
+  type: 'text';
+  value: string;
+}
+
+/** Barcode content for printing */
+export interface PosPrintBarCodeData extends PosPrintDataBase {
+  type: 'barCode';
+  value: string;
   width?: string;
   height?: string;
-
-  // for barcodes
   fontsize?: number;
   displayValue?: boolean;
-
-  // for type image, barcode and qrCode; values: 'left'| 'center' | 'right'
   position?: PosPrintPosition;
-  // image path
+}
+
+/** QR code content for printing */
+export interface PosPrintQRCodeData extends PosPrintDataBase {
+  type: 'qrCode';
+  value: string;
+  width?: string;
+  position?: PosPrintPosition;
+}
+
+/** Image content for printing */
+export interface PosPrintImageData extends PosPrintDataBase {
+  type: 'image';
   path?: string;
-  // image url or base64 object url
   url?: string;
-  // specify the columns in table header, to be used with type table
+  width?: string;
+  height?: string;
+  position?: PosPrintPosition;
+}
+
+/** Table content for printing */
+export interface PosPrintTableData extends PosPrintDataBase {
+  type: 'table';
   tableHeader?: PosPrintTableField[] | string[];
-  //  specify the columns in table body, to be used with type table
   tableBody?: PosPrintTableField[][] | string[][];
-  //  specify the columns in table footer, to be used with type table
   tableFooter?: PosPrintTableField[] | string[];
-  // (type table), set custom style for table header
   tableHeaderStyle?: PrintDataStyle;
-  // (type table), set custom style for table body
   tableBodyStyle?: PrintDataStyle;
-  // (type table), set custom style for table footer
   tableFooterStyle?: PrintDataStyle;
 }
+
+/** Discriminated union of all print data types */
+export type PosPrintData =
+  | PosPrintTextData
+  | PosPrintBarCodeData
+  | PosPrintQRCodeData
+  | PosPrintImageData
+  | PosPrintTableData;
 
 export declare type PosPrintType = 'text' | 'barCode' | 'qrCode' | 'image' | 'table';
 

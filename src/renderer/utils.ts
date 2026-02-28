@@ -1,8 +1,27 @@
-import type { PosPrintData, PrintDataStyle } from '../main/models';
+import type { PosPrintTextData, PosPrintImageData, PrintDataStyle } from '../main/models';
 import QRCode, { QRCodeRenderersOptions } from 'qrcode';
 import DOMPurify from 'dompurify';
 
 type PageElement = HTMLElement | HTMLDivElement | HTMLImageElement;
+
+/** Supported image formats for rendering */
+const IMAGE_SUPPORTED_FORMATS = new Set([
+  'apng',
+  'bmp',
+  'gif',
+  'ico',
+  'cur',
+  'jpeg',
+  'jpg',
+  'jfif',
+  'pjpeg',
+  'pjp',
+  'png',
+  'svg',
+  'tif',
+  'tiff',
+  'webp',
+]);
 
 /**
  * Apply styles to created elements on print web page
@@ -60,10 +79,10 @@ export function sanitizeHtml(html: string): string {
   });
 }
 /**
- * Generates a text element from PosPrintData
+ * Generates a text element from PosPrintTextData
  * @param arg - print data containing text value and style
  */
-export function generatePageText(arg: PosPrintData): HTMLElement {
+export function generatePageText(arg: PosPrintTextData): HTMLElement {
   const div = applyElementStyles(document.createElement('div'), arg.style) as HTMLElement;
   div.innerHTML = sanitizeHtml(arg.value || '');
 
@@ -74,7 +93,7 @@ export function generatePageText(arg: PosPrintData): HTMLElement {
  * @param arg - print data containing cell value and style
  * @param type - cell type, either 'th' or 'td'
  */
-export function generateTableCell(arg: PosPrintData, type = 'td'): HTMLElement {
+export function generateTableCell(arg: PosPrintTextData, type: 'th' | 'td' = 'td'): HTMLElement {
   const cellElement = applyElementStyles(document.createElement(type), {
     padding: '7px 2px',
     ...arg.style,
@@ -87,30 +106,11 @@ export function generateTableCell(arg: PosPrintData, type = 'td'): HTMLElement {
  * Gets image from path or url and returns it as an HTML img element
  * @param arg - print data containing image path/url and dimensions
  */
-export function renderImageToPage(arg: PosPrintData): HTMLElement {
-  const imageSupportedFormats = [
-    'apng',
-    'bmp',
-    'gif',
-    'ico',
-    'cur',
-    'jpeg',
-    'jpg',
-    'jpeg',
-    'jfif',
-    'pjpeg',
-    'pjp',
-    'png',
-    'svg',
-    'tif',
-    'tiff',
-    'webp',
-  ];
-
+export function renderImageToPage(arg: PosPrintImageData): HTMLElement {
   const imgContainer = applyElementStyles(document.createElement('div'), {
     width: '100%',
     display: 'flex',
-    justifyContent: arg?.position || 'left',
+    justifyContent: arg.position || 'left',
   }) as HTMLDivElement;
 
   let uri: string | undefined;
@@ -132,8 +132,8 @@ export function renderImageToPage(arg: PosPrintData): HTMLElement {
       throw new Error(result.error);
     }
     let ext = window.electronAPI.getFileExtension(arg.path);
-    if (!imageSupportedFormats.includes(ext)) {
-      throw new Error(ext + ' file type not supported, consider the types: ' + imageSupportedFormats.join());
+    if (!IMAGE_SUPPORTED_FORMATS.has(ext)) {
+      throw new Error(ext + ' file type not supported, consider the types: ' + [...IMAGE_SUPPORTED_FORMATS].join());
     }
     if (ext === 'svg') {
       ext = 'svg+xml';
