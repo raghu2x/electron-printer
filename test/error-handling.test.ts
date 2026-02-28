@@ -204,7 +204,16 @@ test.describe('Error Handling Tests', () => {
         pageSize: '80mm',
       };
 
-      const data = [{ type: 'text' }, { type: 'barCode' }];
+      const data = [
+        {
+          type: 'text',
+          // Missing value property
+        },
+        {
+          type: 'barCode',
+          // Missing value property
+        },
+      ];
 
       return await api.invoke('test-pos-printer-print', data, options);
     })) as PrintResult;

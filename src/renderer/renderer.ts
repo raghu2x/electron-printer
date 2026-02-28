@@ -19,10 +19,163 @@ const mainBody: HTMLElement = body;
 
 /**
  * @function
- * @name generatePageText
+ * @name renderBarCodeToPage
+ * @param line {PosPrintData with type 'barCode'}
+ * @param lineIndex {number} - index for unique element IDs
+ * @description Renders a barcode element from PosPrintData
+ */
+function renderBarCodeToPage(line: PosPrintData, lineIndex: number): HTMLDivElement {
+  const barcodeWrapperEl = document.createElement('div');
+  const barcodeEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  barcodeEl.setAttributeNS(null, 'id', `barCode-${lineIndex}`);
+  barcodeWrapperEl.append(barcodeEl);
+
+  if (line?.style) {
+    applyElementStyles(barcodeWrapperEl, line.style);
+  } else {
+    barcodeWrapperEl.style.display = 'flex';
+    barcodeWrapperEl.style.justifyContent = line?.position ?? 'left';
+  }
+
+  // Skip rendering if barcode has no value (JsBarcode requires a non-empty string)
+  if (!line.value) {
+    return barcodeWrapperEl;
+  }
+
+  JsBarcode(barcodeEl, line.value, {
+    lineColor: '#000',
+    textMargin: 0,
+    fontOptions: 'bold',
+    fontSize: line.fontsize ?? 12,
+    width: line.width ? Number.parseInt(line.width, 10) : 4,
+    height: line.height ? Number.parseInt(line.height, 10) : 40,
+    displayValue: line.displayValue,
+  });
+
+  return barcodeWrapperEl;
+}
+
+/**
+ * @function
+ * @name renderTableToPage
+ * @param line {PosPrintData with type 'table'}
+ * @param lineIndex index for unique element IDs
+ * @description Renders a table element from PosPrintData
+ */
+function renderTableToPage(line: PosPrintData, lineIndex: number): HTMLDivElement {
+  const tableContainer = document.createElement('div');
+  tableContainer.setAttribute('id', `table-container-${lineIndex}`);
+
+  let table = document.createElement('table');
+  table.setAttribute('id', `table${lineIndex}`);
+  table = applyElementStyles(table, { ...line.style }) as HTMLTableElement;
+
+  let tHeader = document.createElement('thead');
+  tHeader = applyElementStyles(tHeader, line.tableHeaderStyle) as HTMLTableSectionElement;
+
+  let tBody = document.createElement('tbody');
+  tBody = applyElementStyles(tBody, line.tableBodyStyle) as HTMLTableSectionElement;
+
+  let tFooter = document.createElement('tfoot');
+  tFooter = applyElementStyles(tFooter, line.tableFooterStyle) as HTMLTableSectionElement;
+
+  // 1. Headers
+  if (line.tableHeader) {
+    for (const headerArg of line.tableHeader) {
+      if (typeof headerArg === 'object') {
+        switch (headerArg.type) {
+          case 'image': {
+            const img = renderImageToPage(headerArg);
+            const th = document.createElement('th');
+            th.append(img);
+            tHeader.append(th);
+            break;
+          }
+          case 'text':
+            tHeader.append(generateTableCell(headerArg, 'th'));
+            break;
+          default:
+            break;
+        }
+      } else {
+        const th = document.createElement('th');
+        th.innerHTML = sanitizeHtml(String(headerArg));
+        tHeader.append(th);
+      }
+    }
+  }
+
+  // 2. Body
+  if (line.tableBody) {
+    for (const bodyRow of line.tableBody) {
+      const rowTr = document.createElement('tr');
+      for (const colArg of bodyRow) {
+        if (typeof colArg === 'object') {
+          switch (colArg.type) {
+            case 'image': {
+              const img = renderImageToPage(colArg);
+              const td = document.createElement('td');
+              td.append(img);
+              rowTr.append(td);
+              break;
+            }
+            case 'text':
+              rowTr.append(generateTableCell(colArg));
+              break;
+            default:
+              break;
+          }
+        } else {
+          const td = document.createElement('td');
+          td.innerHTML = sanitizeHtml(String(colArg));
+          rowTr.append(td);
+        }
+      }
+      tBody.append(rowTr);
+    }
+  }
+
+  // 3. Footer
+  if (line.tableFooter) {
+    for (const footerArg of line.tableFooter) {
+      if (typeof footerArg === 'object') {
+        switch (footerArg.type) {
+          case 'image': {
+            const img = renderImageToPage(footerArg);
+            const footerTh = document.createElement('th');
+            footerTh.append(img);
+            tFooter.append(footerTh);
+            break;
+          }
+          case 'text':
+            tFooter.append(generateTableCell(footerArg, 'th'));
+            break;
+          default:
+            break;
+        }
+      } else {
+        const footerTh = document.createElement('th');
+        footerTh.innerHTML = sanitizeHtml(String(footerArg));
+        tFooter.append(footerTh);
+      }
+    }
+  }
+
+  // Assemble table
+  table.append(tHeader);
+  table.append(tBody);
+  table.append(tFooter);
+  tableContainer.append(table);
+
+  return tableContainer;
+}
+
+/**
+ * @function
+ * @name renderDataToHTML
  * @param arg {pass argument of type PosPrintData}
  * @description Render data as HTML to page
- * */
+ */
 async function renderDataToHTML(arg: { line: PosPrintData; lineIndex: number }): Promise<void> {
   switch (arg.line.type) {
     case 'text':
@@ -77,156 +230,21 @@ async function renderDataToHTML(arg: { line: PosPrintData; lineIndex: number }):
       return;
     case 'barCode':
       try {
-        const barcodeWrapperEl = document.createElement('div');
-        const barcodeEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        barcodeEl.setAttributeNS(null, 'id', `barCode-${arg.lineIndex}`);
-        barcodeWrapperEl.append(barcodeEl);
-        mainBody.append(barcodeWrapperEl);
-
-        if (arg.line?.style) {
-          applyElementStyles(barcodeWrapperEl, arg.line.style);
-        } else {
-          barcodeWrapperEl.style.display = 'flex';
-          barcodeWrapperEl.style.justifyContent = arg.line?.position || 'left';
-        }
-
-        JsBarcode(`#barCode-${arg.lineIndex}`, arg.line.value || '', {
-          // format: "",
-          lineColor: '#000',
-          textMargin: 0,
-          fontOptions: 'bold',
-          fontSize: arg.line.fontsize || 12,
-          width: arg.line.width ? Number.parseInt(arg.line.width, 10) : 4,
-          height: arg.line.height ? Number.parseInt(arg.line.height, 10) : 40,
-          displayValue: !!arg.line.displayValue,
-        });
-        // send
+        const barcodeWrapper = renderBarCodeToPage(arg.line, arg.lineIndex);
+        mainBody.append(barcodeWrapper);
         window.electronAPI.sendRenderLineReply({ status: true, error: null });
       } catch (e) {
         window.electronAPI.sendRenderLineReply({ status: false, error: (e as Error).toString() });
       }
       return;
     case 'table':
-      // Creating table
-      let tableContainer = document.createElement('div');
-      tableContainer.setAttribute('id', `table-container-${arg.lineIndex}`);
-      let table = document.createElement('table');
-      table.setAttribute('id', `table${arg.lineIndex}`);
-      table = applyElementStyles(table, { ...arg.line.style }) as HTMLTableElement;
-
-      let tHeader = document.createElement('thead');
-      tHeader = applyElementStyles(tHeader, arg.line.tableHeaderStyle) as HTMLTableSectionElement;
-
-      let tBody = document.createElement('tbody');
-      tBody = applyElementStyles(tBody, arg.line.tableBodyStyle) as HTMLTableSectionElement;
-
-      let tFooter = document.createElement('tfoot');
-      tFooter = applyElementStyles(tFooter, arg.line.tableFooterStyle) as HTMLTableSectionElement;
-      // 1. Headers
-      if (arg.line.tableHeader) {
-        for (const headerArg of arg.line.tableHeader) {
-          if (typeof headerArg === 'object') {
-            switch (headerArg.type) {
-              case 'image':
-                try {
-                  const img = renderImageToPage(headerArg);
-                  const th = document.createElement(`th`);
-                  th.append(img);
-                  tHeader.append(th);
-                } catch (e) {
-                  window.electronAPI.sendRenderLineReply({
-                    status: false,
-                    error: (e as Error).toString(),
-                  });
-                }
-                break;
-              case 'text':
-                tHeader.append(generateTableCell(headerArg, 'th'));
-                break;
-              default:
-                break;
-            }
-          } else {
-            const th = document.createElement(`th`);
-            th.innerHTML = sanitizeHtml(String(headerArg));
-            tHeader.append(th);
-          }
-        }
+      try {
+        const tableContainer = renderTableToPage(arg.line, arg.lineIndex);
+        mainBody.append(tableContainer);
+        window.electronAPI.sendRenderLineReply({ status: true, error: null });
+      } catch (e) {
+        window.electronAPI.sendRenderLineReply({ status: false, error: (e as Error).toString() });
       }
-      // 2. Body
-      if (arg.line.tableBody) {
-        for (const bodyRow of arg.line.tableBody) {
-          const rowTr = document.createElement('tr');
-          for (const colArg of bodyRow) {
-            if (typeof colArg === 'object') {
-              switch (colArg.type) {
-                case 'image':
-                  try {
-                    const img = renderImageToPage(colArg);
-                    const td = document.createElement(`td`);
-                    td.append(img);
-                    rowTr.append(td);
-                  } catch (e) {
-                    window.electronAPI.sendRenderLineReply({
-                      status: false,
-                      error: (e as Error).toString(),
-                    });
-                  }
-                  break;
-                case 'text':
-                  rowTr.append(generateTableCell(colArg));
-                  break;
-                default:
-                  break;
-              }
-            } else {
-              const td = document.createElement(`td`);
-              td.innerHTML = sanitizeHtml(String(colArg));
-              rowTr.append(td);
-            }
-          }
-          tBody.append(rowTr);
-        }
-      }
-      // 3. Footer
-      if (arg.line.tableFooter) {
-        for (const footerArg of arg.line.tableFooter) {
-          if (typeof footerArg === 'object') {
-            switch (footerArg.type) {
-              case 'image':
-                try {
-                  const img = renderImageToPage(footerArg);
-                  const footerTh = document.createElement(`th`);
-                  footerTh.append(img);
-                  tFooter.append(footerTh);
-                } catch (e) {
-                  window.electronAPI.sendRenderLineReply({
-                    status: false,
-                    error: (e as Error).toString(),
-                  });
-                }
-                break;
-              case 'text':
-                tFooter.append(generateTableCell(footerArg, 'th'));
-                break;
-              default:
-                break;
-            }
-          } else {
-            const footerTh = document.createElement(`th`);
-            footerTh.innerHTML = sanitizeHtml(String(footerArg));
-            tFooter.append(footerTh);
-          }
-        }
-      }
-      // render table
-      table.append(tHeader);
-      table.append(tBody);
-      table.append(tFooter);
-      tableContainer.append(table);
-      mainBody.append(tableContainer);
-      // send
-      window.electronAPI.sendRenderLineReply({ status: true, error: null });
       break;
     default:
       window.electronAPI.sendRenderLineReply({
