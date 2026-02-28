@@ -18,26 +18,12 @@ if (!body) {
 const mainBody: HTMLElement = body;
 
 /**
- * Initialize container in html view, by setting the width and margins specified in the PosPrinter options
- */
-window.electronAPI.onBodyInit(function (arg) {
-  mainBody.style.width = arg?.width || '100%';
-  mainBody.style.margin = arg?.margin || '0';
-
-  window.electronAPI.sendBodyInitReply({ status: true, error: null });
-});
-/**
- * Listen to render event form the main process,
- * Once the main process sends line data, render this data in the web page
- */
-window.electronAPI.onRenderLine(renderDataToHTML);
-/**
  * @function
  * @name generatePageText
  * @param arg {pass argument of type PosPrintData}
  * @description Render data as HTML to page
  * */
-async function renderDataToHTML(arg: { line: PosPrintData; lineIndex: number }) {
+async function renderDataToHTML(arg: { line: PosPrintData; lineIndex: number }): Promise<void> {
   switch (arg.line.type) {
     case 'text':
       try {
@@ -81,7 +67,7 @@ async function renderDataToHTML(arg: { line: PosPrintData; lineIndex: number }) 
 
         await generateQRCode(`qrCode${arg.lineIndex}`, {
           value: arg.line.value || '',
-          width: arg.line.width ? parseInt(arg.line.width, 10) : undefined,
+          width: arg.line.width ? Number.parseInt(arg.line.width, 10) : undefined,
         });
 
         window.electronAPI.sendRenderLineReply({ status: true, error: null });
@@ -110,8 +96,8 @@ async function renderDataToHTML(arg: { line: PosPrintData; lineIndex: number }) 
           textMargin: 0,
           fontOptions: 'bold',
           fontSize: arg.line.fontsize || 12,
-          width: arg.line.width ? parseInt(arg.line.width, 10) : 4,
-          height: arg.line.height ? parseInt(arg.line.height, 10) : 40,
+          width: arg.line.width ? Number.parseInt(arg.line.width, 10) : 4,
+          height: arg.line.height ? Number.parseInt(arg.line.height, 10) : 40,
           displayValue: !!arg.line.displayValue,
         });
         // send
@@ -157,6 +143,8 @@ async function renderDataToHTML(arg: { line: PosPrintData; lineIndex: number }) 
               case 'text':
                 tHeader.append(generateTableCell(headerArg, 'th'));
                 break;
+              default:
+                break;
             }
           } else {
             const th = document.createElement(`th`);
@@ -187,6 +175,8 @@ async function renderDataToHTML(arg: { line: PosPrintData; lineIndex: number }) 
                   break;
                 case 'text':
                   rowTr.append(generateTableCell(colArg));
+                  break;
+                default:
                   break;
               }
             } else {
@@ -219,6 +209,8 @@ async function renderDataToHTML(arg: { line: PosPrintData; lineIndex: number }) 
               case 'text':
                 tFooter.append(generateTableCell(footerArg, 'th'));
                 break;
+              default:
+                break;
             }
           } else {
             const footerTh = document.createElement(`th`);
@@ -235,5 +227,26 @@ async function renderDataToHTML(arg: { line: PosPrintData; lineIndex: number }) 
       mainBody.append(tableContainer);
       // send
       window.electronAPI.sendRenderLineReply({ status: true, error: null });
+      break;
+    default:
+      window.electronAPI.sendRenderLineReply({
+        status: false,
+        error: `Unknown line type: ${(arg.line as { type: string }).type}`,
+      });
   }
 }
+
+/**
+ * Initialize container in html view, by setting the width and margins specified in the PosPrinter options
+ */
+window.electronAPI.onBodyInit(function (arg) {
+  mainBody.style.width = arg?.width || '100%';
+  mainBody.style.margin = arg?.margin || '0';
+
+  window.electronAPI.sendBodyInitReply({ status: true, error: null });
+});
+/**
+ * Listen to render event form the main process,
+ * Once the main process sends line data, render this data in the web page
+ */
+window.electronAPI.onRenderLine(renderDataToHTML);

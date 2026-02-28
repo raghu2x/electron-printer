@@ -1,5 +1,5 @@
-import { ipcMain } from 'electron';
-import { PaperSize, SizeOptions } from './models';
+import { ipcMain, WebContents } from 'electron';
+import { IpcMsgReplyResult, PaperSize, SizeOptions } from './models';
 
 interface PaperSizeReturn {
   width: number;
@@ -10,9 +10,9 @@ interface PaperSizeReturn {
  * @description Sends messages to the render process to render the data specified in the PostPrintDate interface and receives a status of true
  *
  */
-export function sendIpcMsg(channel: string, webContents: Electron.WebContents, arg: any) {
+export function sendIpcMsg(channel: string, webContents: WebContents, arg: unknown): Promise<IpcMsgReplyResult> {
   return new Promise((resolve, reject) => {
-    ipcMain.once(`${channel}-reply`, (_event, result) => {
+    ipcMain.once(`${channel}-reply`, (_event, result: IpcMsgReplyResult) => {
       if (result.status) {
         resolve(result);
       } else {
@@ -46,6 +46,8 @@ export function parsePaperSize(pageSize?: PaperSize | SizeOptions): PaperSizeRet
       case '80mm':
         width = 302;
         break;
+      default:
+        break;
     }
   } else if (typeof pageSize === 'object') {
     width = pageSize.width;
@@ -56,6 +58,10 @@ export function parsePaperSize(pageSize?: PaperSize | SizeOptions): PaperSizeRet
     width,
     height,
   };
+}
+
+export function convertPixelsToMicrons(pixels: number): number {
+  return Math.ceil(pixels * 264.5833);
 }
 
 export function parsePaperSizeInMicrons(pageSize?: PaperSize | SizeOptions): PaperSizeReturn {
@@ -82,6 +88,8 @@ export function parsePaperSizeInMicrons(pageSize?: PaperSize | SizeOptions): Pap
       case '80mm':
         width = Math.ceil(80 * 1000);
         break;
+      default:
+        break;
     }
   } else if (typeof pageSize === 'object') {
     width = convertPixelsToMicrons(pageSize.width);
@@ -92,8 +100,4 @@ export function parsePaperSizeInMicrons(pageSize?: PaperSize | SizeOptions): Pap
     width,
     height,
   };
-}
-
-export function convertPixelsToMicrons(pixels: number): number {
-  return Math.ceil(pixels * 264.5833);
 }

@@ -5,6 +5,51 @@ import DOMPurify from 'dompurify';
 type PageElement = HTMLElement | HTMLDivElement | HTMLImageElement;
 
 /**
+ * @param element {PageElement}
+ * @param style {PrintDataStyle}
+ * @description Apply styles to created elements on print web page.
+ * */
+export function applyElementStyles(element: PageElement, style: PrintDataStyle = {}): PageElement {
+  if (!style || typeof style !== 'object') {
+    return element;
+  }
+
+  Object.assign(element.style, style);
+  return element;
+}
+
+/**
+ * @param str {string}
+ * @description Checks if a string is a base64 string
+ * */
+export function isBase64(str: string): boolean {
+  if (!str || typeof str !== 'string') {
+    return false;
+  }
+  try {
+    return btoa(atob(str)) === str;
+  } catch (_e) {
+    return false;
+  }
+}
+
+/**
+ * @param url
+ * @description Checks is if a string is a valid URL
+ * */
+export function isValidHttpUrl(url: string): boolean {
+  let validURL;
+
+  try {
+    validURL = new URL(url);
+  } catch (_) {
+    return false;
+  }
+
+  return validURL.protocol === 'http:' || validURL.protocol === 'https:';
+}
+
+/**
  * Sanitize HTML string to prevent XSS attacks
  * Uses DOMPurify with a whitelist of safe tags for receipt printing
  */
@@ -43,7 +88,7 @@ export function generateTableCell(arg: PosPrintData, type = 'td'): HTMLElement {
  * @description get image from path and return it as a html img
  * */
 export function renderImageToPage(arg: PosPrintData): HTMLElement {
-  const image_format = [
+  const imageSupportedFormats = [
     'apng',
     'bmp',
     'gif',
@@ -62,7 +107,7 @@ export function renderImageToPage(arg: PosPrintData): HTMLElement {
     'webp',
   ];
 
-  const img_con = applyElementStyles(document.createElement('div'), {
+  const imgContainer = applyElementStyles(document.createElement('div'), {
     width: '100%',
     display: 'flex',
     justifyContent: arg?.position || 'left',
@@ -87,8 +132,8 @@ export function renderImageToPage(arg: PosPrintData): HTMLElement {
       throw new Error(result.error);
     }
     let ext = window.electronAPI.getFileExtension(arg.path);
-    if (image_format.indexOf(ext) === -1) {
-      throw new Error(ext + ' file type not supported, consider the types: ' + image_format.join());
+    if (!imageSupportedFormats.includes(ext)) {
+      throw new Error(ext + ' file type not supported, consider the types: ' + imageSupportedFormats.join());
     }
     if (ext === 'svg') {
       ext = 'svg+xml';
@@ -112,61 +157,16 @@ export function renderImageToPage(arg: PosPrintData): HTMLElement {
   img.src = uri;
 
   // appending
-  img_con.prepend(img);
-  return img_con;
+  imgContainer.prepend(img);
+  return imgContainer;
 }
 
 /**
- * @param str {string}
- * @description Checks if a string is a base64 string
- * */
-export function isBase64(str: string): boolean {
-  if (!str || typeof str !== 'string') {
-    return false;
-  }
-  try {
-    return btoa(atob(str)) === str;
-  } catch (_e) {
-    return false;
-  }
-}
-
-/**
- * @param element {PageElement}
- * @param style {PrintDataStyle}
- * @description Apply styles to created elements on print web page.
- * */
-export function applyElementStyles(element: PageElement, style: PrintDataStyle = {}): PageElement {
-  if (!style || typeof style !== 'object') {
-    return element;
-  }
-
-  Object.assign(element.style, style);
-  return element;
-}
-
-/**
- * @param url {string}
- * @description Checks is if a string is a valid URL
- * */
-export function isValidHttpUrl(url: string) {
-  let validURL;
-
-  try {
-    validURL = new URL(url);
-  } catch (_) {
-    return false;
-  }
-
-  return validURL.protocol === 'http:' || validURL.protocol === 'https:';
-}
-
-/**
- * @param elementId {string}
- * @param options {object}
+ * @param elementId
+ * @param options
  * @description Generate QR in page
  * */
-export function generateQRCode(elementId: string, qrOptions: { value: string; width?: number }) {
+export function generateQRCode(elementId: string, qrOptions: { value: string; width?: number }): Promise<void> {
   const { value, width = 1 } = qrOptions;
 
   const element = document.querySelector(`#${elementId}`) as HTMLCanvasElement;

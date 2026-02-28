@@ -1,26 +1,26 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import * as fs from 'fs';
-import * as path from 'path';
-import type { PosPrintData } from '../main/models';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import type { IpcMsgReplyResult, PosPrintData } from '../main/models';
 
 const electronAPI = {
-  onBodyInit: (callback: (options: { width?: string; margin?: string }) => void) => {
+  onBodyInit: (callback: (options: { width?: string; margin?: string }) => void): void => {
     ipcRenderer.on('body-init', (_event, arg) => {
       callback(arg);
     });
   },
 
-  onRenderLine: (callback: (data: { line: PosPrintData; lineIndex: number }) => void) => {
+  onRenderLine: (callback: (data: { line: PosPrintData; lineIndex: number }) => void): void => {
     ipcRenderer.on('render-line', (_event, arg) => {
       callback(arg);
     });
   },
 
-  sendBodyInitReply: (result: { status: boolean; error: string | null }) => {
+  sendBodyInitReply: (result: IpcMsgReplyResult): void => {
     ipcRenderer.send('body-init-reply', result);
   },
 
-  sendRenderLineReply: (result: { status: boolean; error: string | null }) => {
+  sendRenderLineReply: (result: IpcMsgReplyResult): void => {
     ipcRenderer.send('render-line-reply', result);
   },
 

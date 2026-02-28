@@ -51,7 +51,7 @@ test.describe('Error Handling Tests', () => {
       expect(printResult.success).toBe(true);
     } else {
       expect(typeof printResult.error).toBe('string');
-      expect(printResult.error!.length).toBeGreaterThan(0);
+      expect(printResult.error?.length).toBeGreaterThan(0);
     }
   });
 

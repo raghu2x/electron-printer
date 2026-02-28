@@ -7,10 +7,14 @@
     "nursery": "error",
     "perf": "error",
     "pedantic": "error"
+    // "restriction": "error"
     // "style": "warn"
-    // "restriction": "error",
   },
   "rules": {
+    "no-rest-spread-properties": "off",
+    "no-optional-chaining": "off",
+    "no-async-await": "off",
+
     "max-depth": "off",
     "max-lines": "off",
     "max-lines-per-function": "off",

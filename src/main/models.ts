@@ -126,3 +126,8 @@ export interface PrintResult {
   data?: PosPrintData[];
   options?: PosPrintOptions;
 }
+
+export interface IpcMsgReplyResult {
+  status: boolean;
+  error: string | null;
+}

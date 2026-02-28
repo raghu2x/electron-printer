@@ -26,7 +26,7 @@ test.describe('IPC Communication Tests', () => {
   test('should send test-print IPC message when button clicked', async () => {
     const messagePromise = electronApp.evaluate(({ ipcMain }) => {
       return new Promise((resolve) => {
-        const handler = (_event: unknown, data: unknown) => {
+        const handler = (_event: unknown, data: unknown): void => {
           ipcMain.removeListener('test-print', handler);
           resolve({ received: true, data });
         };
@@ -59,7 +59,7 @@ test.describe('IPC Communication Tests', () => {
   test('should be able to send custom IPC messages', async () => {
     const messagePromise = electronApp.evaluate(({ ipcMain }) => {
       return new Promise((resolve) => {
-        const handler = (_event: unknown, data: unknown) => {
+        const handler = (_event: unknown, data: unknown): void => {
           ipcMain.removeListener('test-custom-message', handler);
           resolve({ received: true, data });
         };

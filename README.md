@@ -1,6 +1,6 @@
-![License](https://img.shields.io/npm/l/@devraghu/electron-printer)
+![License](https://img.shields.io/npm/l/@devraghu/electron-printer?label=licence)
 ![Version](https://img.shields.io/npm/v/@devraghu/electron-printer?label=version)
-![downloads](https://img.shields.io/npm/dm/@devraghu/electron-printer)
+![downloads](https://img.shields.io/npm/dm/@devraghu/electron-printer?label=downloads)
 
 # Electron-printer
 

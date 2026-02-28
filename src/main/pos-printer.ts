@@ -1,6 +1,6 @@
 import type { PosPrintData, PosPrintOptions, PrintResult } from './models';
 import { BrowserWindow } from 'electron';
-import { join } from 'path';
+import { join } from 'node:path';
 import { convertPixelsToMicrons, parsePaperSize, parsePaperSizeInMicrons, sendIpcMsg } from './utils';
 import { openCashDrawer, getAvailablePrinters } from '@devraghu/cashdrawer';
 
@@ -27,10 +27,7 @@ const renderPrintDocument = async (window: BrowserWindow, data: PosPrintData[]):
       throw new Error('`options.styles` at "' + line.style + '" should be an object. Example: {style: {fontSize: 12}}');
     }
 
-    const result = (await sendIpcMsg('render-line', window.webContents, { line, lineIndex })) as {
-      status: boolean;
-      error?: string;
-    };
+    const result = await sendIpcMsg('render-line', window.webContents, { line, lineIndex });
     if (!result.status) {
       window.close();
       throw new Error(`Failed to render line ${lineIndex} (type: ${line.type}): ${result.error || 'Unknown error'}`);
