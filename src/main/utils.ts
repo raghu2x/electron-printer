@@ -7,8 +7,10 @@ interface PaperSizeReturn {
 }
 
 /**
- * @description Sends messages to the render process to render the data specified in the PostPrintDate interface and receives a status of true
- *
+ * Sends messages to the render process and receives a status reply
+ * @param channel - IPC channel name
+ * @param webContents - the web contents to send message to
+ * @param arg - data to send
  */
 export function sendIpcMsg(channel: string, webContents: WebContents, arg: unknown): Promise<IpcMsgReplyResult> {
   return new Promise((resolve, reject) => {
@@ -23,6 +25,10 @@ export function sendIpcMsg(channel: string, webContents: WebContents, arg: unkno
   });
 }
 
+/**
+ * Parses paper size to pixel dimensions for window sizing
+ * @param pageSize - paper size string or custom dimensions
+ */
 export function parsePaperSize(pageSize?: PaperSize | SizeOptions): PaperSizeReturn {
   let height = 1200;
   let width = 219;
@@ -60,10 +66,18 @@ export function parsePaperSize(pageSize?: PaperSize | SizeOptions): PaperSizeRet
   };
 }
 
+/**
+ * Converts pixels to microns for Chromium print API
+ * @param pixels - pixel value to convert
+ */
 export function convertPixelsToMicrons(pixels: number): number {
   return Math.ceil(pixels * 264.5833);
 }
 
+/**
+ * Parses paper size to micron dimensions for print API
+ * @param pageSize - paper size string or custom dimensions
+ */
 export function parsePaperSizeInMicrons(pageSize?: PaperSize | SizeOptions): PaperSizeReturn {
   // in microns
   let height = 10000;

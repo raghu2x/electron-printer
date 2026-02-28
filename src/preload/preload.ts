@@ -1,29 +1,49 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import type { IpcMsgReplyResult, PosPrintData } from '../main/models';
+import type { IpcMsgReplyResult, PosPrintData, PosPrintOptions } from '../main/models';
 
 const electronAPI = {
-  onBodyInit: (callback: (options: { width?: string; margin?: string }) => void): void => {
+  /**
+   * Registers callback for body initialization event
+   * @param callback - handler for width and margin options
+   */
+  onBodyInit: (callback: (options: Pick<PosPrintOptions, 'width' | 'margin'>) => void): void => {
     ipcRenderer.on('body-init', (_event, arg) => {
       callback(arg);
     });
   },
 
+  /**
+   * Registers callback for render line event
+   * @param callback - handler for line data and index
+   */
   onRenderLine: (callback: (data: { line: PosPrintData; lineIndex: number }) => void): void => {
     ipcRenderer.on('render-line', (_event, arg) => {
       callback(arg);
     });
   },
 
+  /**
+   * Sends body initialization reply to main process
+   * @param result - status and error info
+   */
   sendBodyInitReply: (result: IpcMsgReplyResult): void => {
     ipcRenderer.send('body-init-reply', result);
   },
 
+  /**
+   * Sends render line reply to main process
+   * @param result - status and error info
+   */
   sendRenderLineReply: (result: IpcMsgReplyResult): void => {
     ipcRenderer.send('render-line-reply', result);
   },
 
+  /**
+   * Reads a file and returns its contents as base64
+   * @param filePath - path to the file to read
+   */
   readFileAsBase64: (filePath: string): { success: boolean; data?: string; error?: string } => {
     try {
       // Validate and normalize the file path to prevent path traversal attacks
@@ -47,6 +67,10 @@ const electronAPI = {
     }
   },
 
+  /**
+   * Gets the file extension from a file path
+   * @param filePath - path to extract extension from
+   */
   getFileExtension: (filePath: string): string => {
     return path.extname(filePath).slice(1);
   },

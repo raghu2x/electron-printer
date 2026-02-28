@@ -9,7 +9,7 @@ import {
   sanitizeHtml,
 } from './utils';
 import JsBarcode from 'jsbarcode';
-import type { PosPrintData } from '../main/models';
+import type { PosPrintData, PosPrintOptions } from '../main/models';
 
 const body = document.querySelector('#main') as HTMLElement | null;
 if (!body) {
@@ -18,11 +18,9 @@ if (!body) {
 const mainBody: HTMLElement = body;
 
 /**
- * @function
- * @name renderBarCodeToPage
- * @param line {PosPrintData with type 'barCode'}
- * @param lineIndex {number} - index for unique element IDs
- * @description Renders a barcode element from PosPrintData
+ * Renders a barcode element from PosPrintData
+ * @param line - print data containing barcode value and style
+ * @param lineIndex - index for unique element IDs
  */
 function renderBarCodeToPage(line: PosPrintData, lineIndex: number): HTMLDivElement {
   const barcodeWrapperEl = document.createElement('div');
@@ -56,11 +54,9 @@ function renderBarCodeToPage(line: PosPrintData, lineIndex: number): HTMLDivElem
 }
 
 /**
- * @function
- * @name renderTableToPage
- * @param line {PosPrintData with type 'table'}
- * @param lineIndex index for unique element IDs
- * @description Renders a table element from PosPrintData
+ * Renders a table element from PosPrintData
+ * @param line - print data containing table structure and styles
+ * @param lineIndex - index for unique element IDs
  */
 function renderTableToPage(line: PosPrintData, lineIndex: number): HTMLDivElement {
   const tableContainer = document.createElement('div');
@@ -171,10 +167,8 @@ function renderTableToPage(line: PosPrintData, lineIndex: number): HTMLDivElemen
 }
 
 /**
- * @function
- * @name renderDataToHTML
- * @param arg {pass argument of type PosPrintData}
- * @description Render data as HTML to page
+ * Render data as HTML to page
+ * @param arg - contains the line data and its index
  */
 async function renderDataToHTML(arg: { line: PosPrintData; lineIndex: number }): Promise<void> {
   switch (arg.line.type) {
@@ -257,7 +251,7 @@ async function renderDataToHTML(arg: { line: PosPrintData; lineIndex: number }):
 /**
  * Initialize container in html view, by setting the width and margins specified in the PosPrinter options
  */
-window.electronAPI.onBodyInit(function (arg) {
+window.electronAPI.onBodyInit(function (arg: Pick<PosPrintOptions, 'width' | 'margin'>) {
   mainBody.style.width = arg?.width || '100%';
   mainBody.style.margin = arg?.margin || '0';
 

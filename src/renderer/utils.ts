@@ -5,10 +5,10 @@ import DOMPurify from 'dompurify';
 type PageElement = HTMLElement | HTMLDivElement | HTMLImageElement;
 
 /**
- * @param element {PageElement}
- * @param style {PrintDataStyle}
- * @description Apply styles to created elements on print web page.
- * */
+ * Apply styles to created elements on print web page
+ * @param element - the DOM element to style
+ * @param style - CSS styles to apply
+ */
 export function applyElementStyles(element: PageElement, style: PrintDataStyle = {}): PageElement {
   if (!style || typeof style !== 'object') {
     return element;
@@ -19,9 +19,9 @@ export function applyElementStyles(element: PageElement, style: PrintDataStyle =
 }
 
 /**
- * @param str {string}
- * @description Checks if a string is a base64 string
- * */
+ * Checks if a string is a base64 string
+ * @param str - the string to check
+ */
 export function isBase64(str: string): boolean {
   if (!str || typeof str !== 'string') {
     return false;
@@ -34,9 +34,9 @@ export function isBase64(str: string): boolean {
 }
 
 /**
- * @param url
- * @description Checks is if a string is a valid URL
- * */
+ * Checks if a string is a valid URL
+ * @param url - the URL string to validate
+ */
 export function isValidHttpUrl(url: string): boolean {
   let validURL;
 
@@ -51,7 +51,7 @@ export function isValidHttpUrl(url: string): boolean {
 
 /**
  * Sanitize HTML string to prevent XSS attacks
- * Uses DOMPurify with a whitelist of safe tags for receipt printing
+ * @param html - the HTML string to sanitize
  */
 export function sanitizeHtml(html: string): string {
   return DOMPurify.sanitize(html, {
@@ -60,9 +60,9 @@ export function sanitizeHtml(html: string): string {
   });
 }
 /**
- * @param arg {pass argument of type PosPrintData}
- * @description used for type text, used to generate type text
- * */
+ * Generates a text element from PosPrintData
+ * @param arg - print data containing text value and style
+ */
 export function generatePageText(arg: PosPrintData): HTMLElement {
   const div = applyElementStyles(document.createElement('div'), arg.style) as HTMLElement;
   div.innerHTML = sanitizeHtml(arg.value || '');
@@ -70,10 +70,10 @@ export function generatePageText(arg: PosPrintData): HTMLElement {
   return div;
 }
 /**
- * @param arg {pass argument of type PosPrintData}
- * @param type {string}
- * @description used for type text, used to generate type text
- * */
+ * Generates a table cell element (th or td)
+ * @param arg - print data containing cell value and style
+ * @param type - cell type, either 'th' or 'td'
+ */
 export function generateTableCell(arg: PosPrintData, type = 'td'): HTMLElement {
   const cellElement = applyElementStyles(document.createElement(type), {
     padding: '7px 2px',
@@ -84,9 +84,9 @@ export function generateTableCell(arg: PosPrintData, type = 'td'): HTMLElement {
   return cellElement;
 }
 /**
- * @param arg {pass argument of type PosPrintData}
- * @description get image from path and return it as a html img
- * */
+ * Gets image from path or url and returns it as an HTML img element
+ * @param arg - print data containing image path/url and dimensions
+ */
 export function renderImageToPage(arg: PosPrintData): HTMLElement {
   const imageSupportedFormats = [
     'apng',
@@ -162,10 +162,10 @@ export function renderImageToPage(arg: PosPrintData): HTMLElement {
 }
 
 /**
- * @param elementId
- * @param options
- * @description Generate QR in page
- * */
+ * Generates QR code on a canvas element
+ * @param elementId - the canvas element ID to render QR code on
+ * @param qrOptions - QR code value and width settings
+ */
 export function generateQRCode(elementId: string, qrOptions: { value: string; width: number }): Promise<void> {
   const { value, width } = qrOptions;
 

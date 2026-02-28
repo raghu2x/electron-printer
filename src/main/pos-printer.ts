@@ -8,6 +8,11 @@ if (process.type === 'renderer') {
   throw new Error('electron-pos-printer: this module must be used in the main process only');
 }
 
+/**
+ * Renders print data to the browser window
+ * @param window - the browser window to render in
+ * @param data - array of print data to render
+ */
 const renderPrintDocument = async (window: BrowserWindow, data: PosPrintData[]): Promise<{ message: string }> => {
   for (const [lineIndex, line] of data.entries()) {
     // ========== VALIDATION =========
@@ -37,6 +42,11 @@ const renderPrintDocument = async (window: BrowserWindow, data: PosPrintData[]):
   return { message: 'page-rendered' };
 };
 
+/**
+ * Prints data to a POS printer or opens a preview window
+ * @param data - array of print data to print
+ * @param options - print configuration options
+ */
 const print = (data: PosPrintData[], options: PosPrintOptions): Promise<PrintResult> => {
   return new Promise((resolve, reject) => {
     /**
