@@ -1,8 +1,8 @@
-![License](https://img.shields.io/npm/l/@devraghu/electron-printer?label=licence)
+![License](https://img.shields.io/npm/l/@devraghu/electron-printer)
 ![Version](https://img.shields.io/npm/v/@devraghu/electron-printer?label=version)
-![downloads](https://img.shields.io/npm/dm/@devraghu/electron-printer?label=downloads)
+![downloads](https://img.shields.io/npm/dm/@devraghu/electron-printer)
 
-# Electron-printer
+# Electron Printer
 
 An Electron.js plugin for thermal receipt printers and cash drawers. Supports 80mm, 78mm, 76mm, 58mm, 57mm, and 44mm printers with cash drawer integration.
 
