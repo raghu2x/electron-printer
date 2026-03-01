@@ -21,7 +21,7 @@ yarn add @devraghu/electron-printer
 This library is designed for use in the **main process only**.
 
 ```js
-const { printer } = require('@devraghu/electron-printer');
+import { printer } from '@devraghu/electron-printer';
 
 const options = {
   preview: false,
@@ -63,7 +63,9 @@ printer
 
 > **Note:** If you need to trigger printing from the renderer process, use IPC to communicate with the main process.
 
-## TypeScript Usage
+## TypeScript
+
+Full TypeScript support with exported types:
 
 ```typescript
 import { printer, type PrintData, type PrintOptions, type PrintResult } from '@devraghu/electron-printer';
@@ -234,7 +236,7 @@ Retrieve a list of all available printers on the system:
 ```typescript
 import { printer } from '@devraghu/electron-printer';
 
-const printers = printer.getPrinters();
+const printers = await printer.getPrinters();
 console.log(printers);
 // [{ name: 'XP-80C', isDefault: true, ... }, ...]
 ```
@@ -262,15 +264,16 @@ electron-printer/
 ├── src/
 │   ├── main/
 │   │   ├── index.ts          # Main exports
-│   │   ├── printer.ts        # printer exports
+│   │   ├── printer.ts        # Printer API
 │   │   ├── models.ts         # TypeScript interfaces
 │   │   └── utils.ts          # Helper functions
 │   ├── renderer/
 │   │   ├── renderer.ts       # Content rendering
 │   │   ├── utils.ts          # HTML generation
-│   │   └── index.html        # Print template
+│   │   ├── index.html        # Print template
+│   │   └── index.css         # Print styles
 │   └── preload/
-│       └── preload.ts        # Preload script with API types
+│       └── preload.ts        # Preload script
 ├── demo/                     # Demo application
 ├── test/                     # Playwright E2E tests
 └── dist/                     # Compiled output
