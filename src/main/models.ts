@@ -8,22 +8,63 @@ export interface SizeOptions {
 }
 
 /**
- * Print options
+ * Print configuration options.
+ *
+ * Extends Electron's WebContentsPrintOptions with additional properties for receipt printing.
+ * Inherited options include: silent, printBackground, copies, header, footer, color,
+ * margins, landscape, scaleFactor, pagesPerSheet, collate, pageRanges, duplexMode.
+ *
  * @see https://www.electronjs.org/docs/latest/api/web-contents#contentsprintoptions-callback
  */
 export interface PrintOptions extends Omit<WebContentsPrintOptions, 'pageSize' | 'deviceName' | 'dpi'> {
-  // width of page and body
+  /**
+   * CSS width of the print container element.
+   * @example "100%", "80mm", "300px"
+   */
   width?: string;
+
+  /**
+   * CSS margin of the print container element.
+   * @example "0", "10px", "5mm 10mm"
+   */
   margin?: string;
 
-  /** false=print，true=pop preview window */
+  /**
+   * When true, opens a preview window instead of printing directly.
+   * @default false
+   */
   preview?: boolean;
+
+  /**
+   * Name of the target printer. Required unless `silent` or `preview` is true.
+   * Use `getPrinters()` to get available printer names.
+   */
   printerName?: string;
-  /** Timeout，actual time is ：data.length * timeoutPerLine ms */
+
+  /**
+   * Timeout per print item in milliseconds.
+   * Total timeout is calculated as: `data.length * timeOutPerLine + 200ms`.
+   * Used to prevent hanging when printer is disconnected.
+   * @default 400
+   */
   timeOutPerLine?: number;
+
+  /**
+   * Paper size for printing. Can be a preset size string or custom dimensions.
+   * @example "80mm", "58mm", { width: 300, height: 400 }
+   */
   pageSize?: PaperSize | SizeOptions;
+
+  /**
+   * Print resolution in dots per inch.
+   * @example { horizontal: 300, vertical: 300 }
+   */
   dpi?: { horizontal: number; vertical: number };
-  /** Path to HTML file for custom print options */
+
+  /**
+   * Path to a custom HTML template file for the print window.
+   * If not provided, uses the default built-in template.
+   */
   pathTemplate?: string;
 }
 

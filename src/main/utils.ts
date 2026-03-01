@@ -1,10 +1,5 @@
 import { ipcMain, WebContents } from 'electron';
-import { IpcMsgReplyResult, PaperSize, SizeOptions } from './models';
-
-interface PaperSizeReturn {
-  width: number;
-  height: number;
-}
+import { IpcMsgReplyResult, PaperSize, PrintData, PrintOptions, SizeOptions } from './models';
 
 /** Paper width in pixels for window sizing */
 const PAPER_WIDTHS_PX: Record<PaperSize, number> = {
@@ -49,7 +44,7 @@ export function sendIpcMsg(channel: string, webContents: WebContents, arg: unkno
  * Parses paper size to pixel dimensions for window sizing
  * @param pageSize - paper size string or custom dimensions
  */
-export function parsePaperSize(pageSize?: PaperSize | SizeOptions): PaperSizeReturn {
+export function parsePaperSize(pageSize?: PaperSize | SizeOptions): SizeOptions {
   const defaultHeight = 1200;
   const defaultWidth = 219;
 
@@ -82,14 +77,19 @@ export function convertPixelsToMicrons(pixels: number): number {
  * Parses paper size to micron dimensions for print API
  * @param pageSize - paper size string or custom dimensions
  */
-export function parsePaperSizeInMicrons(pageSize?: PaperSize | SizeOptions): PaperSizeReturn {
+export async function parsePaperSizeInMicrons(
+  webContents: WebContents,
+  pageSize?: PaperSize | SizeOptions,
+): Promise<SizeOptions> {
   const defaultHeight = 10000;
   const defaultWidth = 58000;
 
   if (typeof pageSize === 'string') {
+    const clientHeight = await webContents.executeJavaScript('document.body.clientHeight');
+
     return {
       width: PAPER_WIDTHS_MICRONS[pageSize] ?? defaultWidth,
-      height: defaultHeight,
+      height: convertPixelsToMicrons(clientHeight),
     };
   }
 
@@ -101,4 +101,39 @@ export function parsePaperSizeInMicrons(pageSize?: PaperSize | SizeOptions): Pap
   }
 
   return { width: defaultWidth, height: defaultHeight };
+}
+
+/**
+ * Creates a timeout promise for print operations
+ */
+export function createPrintTimeout(timeoutMs: number): Promise<never> {
+  return new Promise((_, reject) => {
+    setTimeout(() => {
+      reject(new Error('[TimedOutError] Make sure your printer is connected'));
+    }, timeoutMs);
+  });
+}
+
+/**
+ * Validates print options before printing
+ * @throws Error if validation fails
+ */
+export function validatePrintOptions(data: PrintData[], options: PrintOptions): void {
+  if (!options.preview && !options.printerName && !options.silent) {
+    throw new Error("A printer name is required, if you don't want to specify a printer name, set silent to true");
+  }
+
+  if (typeof options.pageSize === 'object' && (!options.pageSize.height || !options.pageSize.width)) {
+    throw new Error('height and width properties are required for options.pageSize');
+  }
+
+  for (const [index, item] of data.entries()) {
+    if (item.type === 'image' && !item.path && !item.url) {
+      throw new Error(`Print item ${index}: image requires a path or url`);
+    }
+
+    if (item.style && typeof item.style !== 'object') {
+      throw new Error(`Print item ${index}: style must be an object. Example: {style: {fontSize: 12}}`);
+    }
+  }
 }

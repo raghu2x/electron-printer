@@ -1,5 +1,4 @@
 import type { PrintTextData, PrintImageData, PrintDataStyle } from '../main/models';
-import QRCode, { QRCodeRenderersOptions } from 'qrcode';
 import DOMPurify from 'dompurify';
 
 /** Supported image formats for rendering */
@@ -160,25 +159,4 @@ export function createImageElement(imageData: PrintImageData): HTMLElement {
   // appending
   imgContainer.prepend(img);
   return imgContainer;
-}
-
-/**
- * Renders QR code on a canvas element
- * @param elementId - the canvas element ID to render QR code on
- * @param qrOptions - QR code value and width settings
- */
-export function renderQRCode(elementId: string, qrOptions: { value: string; width: number }): Promise<void> {
-  const { value, width } = qrOptions;
-
-  const element = document.querySelector(`#${elementId}`) as HTMLCanvasElement;
-  const canvasOptions: QRCodeRenderersOptions = {
-    width,
-    errorCorrectionLevel: 'H',
-    color: {
-      dark: '#000',
-      light: '#fff',
-    },
-  };
-
-  return QRCode.toCanvas(element, value, canvasOptions);
 }

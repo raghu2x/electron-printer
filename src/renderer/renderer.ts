@@ -1,16 +1,16 @@
 // oxlint-disable-next-line import/no-unassigned-import
 import './index.css';
-import {
-  applyElementStyles,
-  createTextElement,
-  renderQRCode,
-  createTableCell,
-  createImageElement,
-  sanitizeHtml,
-} from './utils';
+import { applyElementStyles, createTextElement, createTableCell, createImageElement, sanitizeHtml } from './utils';
 import JsBarcode from 'jsbarcode';
-import type { PrintData, PrintBarCodeData, PrintTableData, PrintOptions, PrintTableField } from '../main/models';
-import type { IpcMsgReplyResult } from '../main/models';
+import QRCode from 'qrcode';
+import type {
+  PrintData,
+  PrintBarCodeData,
+  PrintQRCodeData,
+  PrintTableData,
+  PrintOptions,
+  PrintTableField,
+} from '../main/models';
 
 const body = document.querySelector('#main') as HTMLElement | null;
 if (!body) {
@@ -24,7 +24,7 @@ const mainBody: HTMLElement = body;
  * @param error - error message if failed
  */
 function sendRenderResult(success: boolean, error: string | null = null): void {
-  window.electronAPI.sendRenderLineReply({ status: success, error } as IpcMsgReplyResult);
+  window.electronAPI.sendRenderLineReply({ status: success, error });
 }
 
 /**
@@ -61,6 +61,40 @@ function renderBarCode(barcodeData: PrintBarCodeData, itemIndex: number): HTMLDi
   });
 
   return barcodeWrapperEl;
+}
+
+/**
+ * Renders a QR code element from PrintQRCodeData
+ * @param qrCodeData - print data containing QR code value and style
+ * @param itemIndex - index for unique element IDs
+ */
+async function renderQRCode(qrCodeData: PrintQRCodeData, itemIndex: number): Promise<HTMLDivElement> {
+  const container = document.createElement('div');
+  container.style.display = 'flex';
+  container.style.justifyContent = qrCodeData.position || 'left';
+
+  if (qrCodeData.style) {
+    applyElementStyles(container, qrCodeData.style);
+  }
+
+  const qrCodeCanvas = document.createElement('canvas');
+  qrCodeCanvas.setAttribute('id', `qrCode-${itemIndex}`);
+  applyElementStyles(qrCodeCanvas, {
+    textAlign: qrCodeData.position ? '-webkit-' + qrCodeData.position : '-webkit-left',
+  });
+
+  container.append(qrCodeCanvas);
+
+  await QRCode.toCanvas(qrCodeCanvas, qrCodeData.value || '', {
+    width: qrCodeData.width ? Number.parseInt(qrCodeData.width, 10) : 55,
+    errorCorrectionLevel: 'H',
+    color: {
+      dark: '#000',
+      light: '#fff',
+    },
+  });
+
+  return container;
 }
 
 /**
@@ -171,28 +205,8 @@ async function renderDataToHTML(renderContext: RenderContext): Promise<void> {
 
     case 'qrCode':
       try {
-        const container = document.createElement('div');
-        container.style.display = 'flex';
-        container.style.justifyContent = printItem.position || 'left';
-
-        if (printItem.style) {
-          applyElementStyles(container, printItem.style);
-        }
-
-        const qrCode = document.createElement('canvas');
-        qrCode.setAttribute('id', `qrCode${itemIndex}`);
-        applyElementStyles(qrCode, {
-          textAlign: printItem.position ? '-webkit-' + printItem.position : '-webkit-left',
-        });
-
-        container.append(qrCode);
-        mainBody.append(container);
-
-        await renderQRCode(`qrCode${itemIndex}`, {
-          value: printItem.value || '',
-          width: printItem.width ? Number.parseInt(printItem.width, 10) : 55,
-        });
-
+        const qrCodeElement = await renderQRCode(printItem, itemIndex);
+        mainBody.append(qrCodeElement);
         sendRenderResult(true);
       } catch (e) {
         sendRenderResult(false, (e as Error).toString());
