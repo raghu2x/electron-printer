@@ -44,7 +44,7 @@ test.describe('Error Handling Tests', () => {
         },
       ];
 
-      return await api.invoke('test-pos-printer-print', data, options);
+      return await api.invoke('test-printer-print', data, options);
     })) as PrintResult;
 
     if (printResult.success) {
@@ -75,7 +75,7 @@ test.describe('Error Handling Tests', () => {
         },
       ];
 
-      return await api.invoke('test-pos-printer-print', data, options);
+      return await api.invoke('test-printer-print', data, options);
     })) as PrintResult;
 
     expect(printResult.success).toBe(true);
@@ -95,7 +95,7 @@ test.describe('Error Handling Tests', () => {
 
       const data: unknown[] = [];
 
-      return await api.invoke('test-pos-printer-print', data, options);
+      return await api.invoke('test-printer-print', data, options);
     })) as PrintResult;
 
     expect(printResult.success).toBe(true);
@@ -124,7 +124,7 @@ test.describe('Error Handling Tests', () => {
         },
       ];
 
-      return await api.invoke('test-pos-printer-print', data, options);
+      return await api.invoke('test-printer-print', data, options);
     })) as PrintResult;
 
     if (printResult.success) {
@@ -156,7 +156,7 @@ test.describe('Error Handling Tests', () => {
         },
       ];
 
-      return await api.invoke('test-pos-printer-print', data, options);
+      return await api.invoke('test-printer-print', data, options);
     })) as PrintResult;
 
     if (!printResult.success) {
@@ -186,7 +186,7 @@ test.describe('Error Handling Tests', () => {
         },
       ];
 
-      return await api.invoke('test-pos-printer-print', data, options);
+      return await api.invoke('test-printer-print', data, options);
     })) as PrintResult;
 
     expect(printResult.success).toBe(true);
@@ -215,7 +215,7 @@ test.describe('Error Handling Tests', () => {
         },
       ];
 
-      return await api.invoke('test-pos-printer-print', data, options);
+      return await api.invoke('test-printer-print', data, options);
     })) as PrintResult;
 
     expect(printResult.success).toBe(true);
@@ -242,7 +242,7 @@ test.describe('Error Handling Tests', () => {
         },
       ];
 
-      return await api.invoke('test-pos-printer-print', data, options);
+      return await api.invoke('test-printer-print', data, options);
     })) as PrintResult;
 
     expect(printResult.success).toBe(true);
@@ -268,7 +268,7 @@ test.describe('Error Handling Tests', () => {
         },
       ];
 
-      return await api.invoke('test-pos-printer-print', data, options);
+      return await api.invoke('test-printer-print', data, options);
     })) as PrintResult;
 
     expect(printResult.success).toBe(true);

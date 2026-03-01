@@ -24,7 +24,7 @@ test.describe('Application Launch Tests', () => {
 
   test('window should have correct title', async () => {
     const title = await window.title();
-    expect(title).toBe('Electron Pos Printer Demo');
+    expect(title).toBe('Electron Printer Demo');
   });
 
   test('window should have correct size', async () => {
@@ -39,7 +39,7 @@ test.describe('Application Launch Tests', () => {
   test('should load demo HTML correctly', async () => {
     await window.waitForLoadState('networkidle');
     const content = await window.content();
-    expect(content).toContain('Electron POS Printer Demo');
+    expect(content).toContain('Electron Printer Demo');
     expect(content).toContain('Print Test Receipt');
   });
 

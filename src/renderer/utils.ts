@@ -1,8 +1,6 @@
-import type { PosPrintTextData, PosPrintImageData, PrintDataStyle } from '../main/models';
+import type { PrintTextData, PrintImageData, PrintDataStyle } from '../main/models';
 import QRCode, { QRCodeRenderersOptions } from 'qrcode';
 import DOMPurify from 'dompurify';
-
-type PageElement = HTMLElement | HTMLDivElement | HTMLImageElement;
 
 /** Supported image formats for rendering */
 const IMAGE_SUPPORTED_FORMATS = new Set([
@@ -28,7 +26,7 @@ const IMAGE_SUPPORTED_FORMATS = new Set([
  * @param element - the DOM element to style
  * @param style - CSS styles to apply
  */
-export function applyElementStyles(element: PageElement, style: PrintDataStyle = {}): PageElement {
+export function applyElementStyles<T extends HTMLElement>(element: T, style: PrintDataStyle = {}): T {
   if (!style || typeof style !== 'object') {
     return element;
   }
@@ -78,60 +76,63 @@ export function sanitizeHtml(html: string): string {
     ALLOWED_ATTR: ['style', 'class'],
   });
 }
+
 /**
- * Generates a text element from PosPrintTextData
- * @param arg - print data containing text value and style
+ * Creates a text element from PrintTextData
+ * @param textData - print data containing text value and style
  */
-export function generatePageText(arg: PosPrintTextData): HTMLElement {
-  const div = applyElementStyles(document.createElement('div'), arg.style) as HTMLElement;
-  div.innerHTML = sanitizeHtml(arg.value || '');
+export function createTextElement(textData: PrintTextData): HTMLDivElement {
+  const div = applyElementStyles(document.createElement('div'), textData.style);
+  div.innerHTML = sanitizeHtml(textData.value || '');
 
   return div;
 }
+
 /**
- * Generates a table cell element (th or td)
- * @param arg - print data containing cell value and style
- * @param type - cell type, either 'th' or 'td'
+ * Creates a table cell element (th or td)
+ * @param cellData - print data containing cell value and style
+ * @param cellType - cell type, either 'th' or 'td'
  */
-export function generateTableCell(arg: PosPrintTextData, type: 'th' | 'td' = 'td'): HTMLElement {
-  const cellElement = applyElementStyles(document.createElement(type), {
+export function createTableCell(cellData: PrintTextData, cellType: 'th' | 'td' = 'td'): HTMLElement {
+  const cellElement = applyElementStyles(document.createElement(cellType), {
     padding: '7px 2px',
-    ...arg.style,
+    ...cellData.style,
   });
-  cellElement.innerHTML = sanitizeHtml(arg.value || '');
+  cellElement.innerHTML = sanitizeHtml(cellData.value || '');
 
   return cellElement;
 }
+
 /**
- * Gets image from path or url and returns it as an HTML img element
- * @param arg - print data containing image path/url and dimensions
+ * Creates an image element from PrintImageData
+ * @param imageData - print data containing image path/url and dimensions
  */
-export function renderImageToPage(arg: PosPrintImageData): HTMLElement {
+export function createImageElement(imageData: PrintImageData): HTMLElement {
   const imgContainer = applyElementStyles(document.createElement('div'), {
     width: '100%',
     display: 'flex',
-    justifyContent: arg.position || 'left',
-  }) as HTMLDivElement;
+    justifyContent: imageData.position || 'left',
+  });
 
   let uri: string | undefined;
 
-  if (arg.url) {
-    const isImageBase64 = isBase64(arg.url);
-    if (!isValidHttpUrl(arg.url) && !isImageBase64) {
-      throw new Error(`Invalid url: ${arg.url}`);
+  if (imageData.url) {
+    const isImageBase64 = isBase64(imageData.url);
+    if (!isValidHttpUrl(imageData.url) && !isImageBase64) {
+      throw new Error(`Invalid url: ${imageData.url}`);
     }
     if (isImageBase64) {
-      uri = 'data:image/png;base64,' + arg.url;
+      uri = 'data:image/png;base64,' + imageData.url;
     } else {
-      uri = arg.url;
+      uri = imageData.url;
     }
-  } else if (arg.path) {
+  } else if (imageData.path) {
     // file must be read via preload API
-    const result = window.electronAPI.readFileAsBase64(arg.path);
+    const result = window.electronAPI.readFileAsBase64(imageData.path);
     if (!result.success) {
       throw new Error(result.error);
     }
-    let ext = window.electronAPI.getFileExtension(arg.path);
+    let ext = window.electronAPI.getFileExtension(imageData.path);
     if (!IMAGE_SUPPORTED_FORMATS.has(ext)) {
       throw new Error(ext + ' file type not supported, consider the types: ' + [...IMAGE_SUPPORTED_FORMATS].join());
     }
@@ -149,10 +150,10 @@ export function renderImageToPage(arg: PosPrintImageData): HTMLElement {
   }
 
   const img = applyElementStyles(document.createElement('img'), {
-    height: arg.height,
-    width: arg.width,
-    ...arg.style,
-  }) as HTMLImageElement;
+    height: imageData.height,
+    width: imageData.width,
+    ...imageData.style,
+  });
 
   img.src = uri;
 
@@ -162,11 +163,11 @@ export function renderImageToPage(arg: PosPrintImageData): HTMLElement {
 }
 
 /**
- * Generates QR code on a canvas element
+ * Renders QR code on a canvas element
  * @param elementId - the canvas element ID to render QR code on
  * @param qrOptions - QR code value and width settings
  */
-export function generateQRCode(elementId: string, qrOptions: { value: string; width: number }): Promise<void> {
+export function renderQRCode(elementId: string, qrOptions: { value: string; width: number }): Promise<void> {
   const { value, width } = qrOptions;
 
   const element = document.querySelector(`#${elementId}`) as HTMLCanvasElement;

@@ -1,16 +1,16 @@
 export type {
-  PosPrintData,
-  PosPrintTextData,
-  PosPrintBarCodeData,
-  PosPrintQRCodeData,
-  PosPrintImageData,
-  PosPrintTableData,
-  PosPrintOptions,
-  PosPrintPosition,
-  PosPrintTableField,
-  PosPrintType,
+  PrintData,
+  PrintTextData,
+  PrintBarCodeData,
+  PrintQRCodeData,
+  PrintImageData,
+  PrintTableData,
+  PrintOptions,
+  PrintPosition,
+  PrintTableField,
+  PrintType,
 } from './models';
-export { posPrinter } from './pos-printer';
+export { printer } from './printer';
 
 // Re-export cashdrawer functions
 export { PrinterStatus, PrinterType, PrinterErrorCodes } from '@devraghu/cashdrawer';

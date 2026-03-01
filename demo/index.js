@@ -1,38 +1,38 @@
 // oxlint-disable no-console
 import { app, BrowserWindow, ipcMain, screen } from 'electron';
 import path from 'node:path';
-import { posPrinter } from '../dist/index.js';
+import { printer } from '../dist/index.js';
 
 // Test IPC handlers for Playwright tests
-ipcMain.handle('test-pos-printer-available', () => {
+ipcMain.handle('test-printer-available', () => {
   try {
-    console.log('Testing posPrinter availability...');
-    console.log('posPrinter type:', typeof posPrinter);
-    console.log('posPrinter.print type:', typeof posPrinter.print);
+    console.log('Testing printer availability...');
+    console.log('printer type:', typeof printer);
+    console.log('printer.print type:', typeof printer.print);
 
-    const available = typeof posPrinter === 'object' && typeof posPrinter.print === 'function';
+    const available = typeof printer === 'object' && typeof printer.print === 'function';
 
     return {
       success: true,
       available: available,
       debug: {
-        posPrinterType: typeof posPrinter,
-        printMethodType: typeof posPrinter.print,
-        hasStaticPrint: typeof posPrinter.print === 'function',
+        printerType: typeof printer,
+        printMethodType: typeof printer.print,
+        hasStaticPrint: typeof printer.print === 'function',
       },
     };
   } catch (error) {
-    console.error('Error checking posPrinter availability:', error);
+    console.error('Error checking printer availability:', error);
     return { success: false, error: error.message };
   }
 });
 
-ipcMain.handle('test-pos-printer-print', async (event, data, options) => {
+ipcMain.handle('test-printer-print', async (event, data, options) => {
   try {
     console.log('Attempting to print with data:', data);
     console.log('Print options:', options);
 
-    const result = await posPrinter.print(data, options);
+    const result = await printer.print(data, options);
     console.log('Print result:', result);
 
     return { success: true, error: null, result };
@@ -76,7 +76,7 @@ ipcMain.on('test-print', testPrint);
 // Cash drawer IPC handlers
 ipcMain.handle('get-printers', async () => {
   try {
-    const printers = await posPrinter.getPrinters();
+    const printers = await printer.getPrinters();
     return { success: true, printers };
   } catch (error) {
     console.error('Error getting printers:', error);
@@ -87,7 +87,7 @@ ipcMain.handle('get-printers', async () => {
 ipcMain.handle('open-cash-drawer', async (event, printerName, options) => {
   try {
     console.log('Opening cash drawer on printer:', printerName);
-    const result = await posPrinter.openCashDrawer(printerName, options);
+    const result = await printer.openCashDrawer(printerName, options);
     console.log('Cash drawer result:', result);
     return result;
   } catch (error) {
@@ -226,14 +226,14 @@ function testPrint() {
   ];
 
   try {
-    posPrinter
+    printer
       .print(data, options)
       .then(() => console.log('done'))
       .catch((error) => {
         console.error(error);
       });
   } catch (e) {
-    console.log(posPrinter);
+    console.log(printer);
     console.log(e);
   }
 }

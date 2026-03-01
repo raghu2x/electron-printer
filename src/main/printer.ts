@@ -1,11 +1,11 @@
-import type { PosPrintData, PosPrintOptions, PrintResult } from './models';
+import type { PrintData, PrintOptions, PrintResult } from './models';
 import { BrowserWindow } from 'electron';
 import { join } from 'node:path';
 import { convertPixelsToMicrons, parsePaperSize, parsePaperSizeInMicrons, sendIpcMsg } from './utils';
 import { openCashDrawer, getAvailablePrinters } from '@devraghu/cashdrawer';
 
 if (process.type === 'renderer') {
-  throw new Error('electron-pos-printer: this module must be used in the main process only');
+  throw new Error('electron-printer: this module must be used in the main process only');
 }
 
 /**
@@ -13,29 +13,33 @@ if (process.type === 'renderer') {
  * @param window - the browser window to render in
  * @param data - array of print data to render
  */
-const renderPrintDocument = async (window: BrowserWindow, data: PosPrintData[]): Promise<{ message: string }> => {
-  for (const [lineIndex, line] of data.entries()) {
+const renderPrintDocument = async (window: BrowserWindow, data: PrintData[]): Promise<{ message: string }> => {
+  for (const [itemIndex, printItem] of data.entries()) {
     // ========== VALIDATION =========
     /**
      * Throw an error if image is set without path or url.
      */
-    if (line.type === 'image' && !line.path && !line.url) {
+    if (printItem.type === 'image' && !printItem.path && !printItem.url) {
       window.close();
       throw new Error('An Image url/path is required for type image');
     }
     /**
-     * line.style is no longer a string but an object, throw and error if a use still sets a string
+     * printItem.style is no longer a string but an object, throw and error if a use still sets a string
      *
      */
-    if (line.style && typeof line.style !== 'object') {
+    if (printItem.style && typeof printItem.style !== 'object') {
       window.close();
-      throw new Error('`options.styles` at "' + line.style + '" should be an object. Example: {style: {fontSize: 12}}');
+      throw new Error(
+        '`options.styles` at "' + printItem.style + '" should be an object. Example: {style: {fontSize: 12}}',
+      );
     }
 
-    const result = await sendIpcMsg('render-line', window.webContents, { line, lineIndex });
+    const result = await sendIpcMsg('render-line', window.webContents, { printItem, itemIndex });
     if (!result.status) {
       window.close();
-      throw new Error(`Failed to render line ${lineIndex} (type: ${line.type}): ${result.error || 'Unknown error'}`);
+      throw new Error(
+        `Failed to render item ${itemIndex} (type: ${printItem.type}): ${result.error || 'Unknown error'}`,
+      );
     }
   }
   // when the render process is done rendering the page, resolve
@@ -43,11 +47,11 @@ const renderPrintDocument = async (window: BrowserWindow, data: PosPrintData[]):
 };
 
 /**
- * Prints data to a POS printer or opens a preview window
+ * Prints data to a printer or opens a preview window
  * @param data - array of print data to print
  * @param options - print configuration options
  */
-const print = (data: PosPrintData[], options: PosPrintOptions): Promise<PrintResult> => {
+const print = (data: PrintData[], options: PrintOptions): Promise<PrintResult> => {
   return new Promise((resolve, reject) => {
     /**
      * Validation
@@ -199,7 +203,7 @@ const print = (data: PosPrintData[], options: PosPrintOptions): Promise<PrintRes
   });
 };
 
-export const posPrinter = {
+export const printer = {
   print,
   openCashDrawer,
   getPrinters: getAvailablePrinters,

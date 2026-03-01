@@ -20,7 +20,7 @@ test.describe('Demo UI Tests', () => {
 
   test('should display demo title', async () => {
     const title = await window.locator('h1.title').textContent();
-    expect(title).toBe('Electron POS Printer Demo');
+    expect(title).toBe('Electron Printer Demo');
   });
 
   test('should have print test button', async () => {

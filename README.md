@@ -21,7 +21,7 @@ yarn add @devraghu/electron-printer
 This library is designed for use in the **main process only**.
 
 ```js
-const { posPrinter } = require('@devraghu/electron-printer');
+const { printer } = require('@devraghu/electron-printer');
 
 const options = {
   preview: false,
@@ -55,7 +55,7 @@ const data = [
   },
 ];
 
-posPrinter
+printer
   .print(data, options)
   .then(() => console.log('Print successful'))
   .catch((error) => console.error(error));
@@ -66,9 +66,9 @@ posPrinter
 ## TypeScript Usage
 
 ```typescript
-import { posPrinter, type PosPrintData, type PosPrintOptions, type PrintResult } from '@devraghu/electron-printer';
+import { printer, type PrintData, type PrintOptions, type PrintResult } from '@devraghu/electron-printer';
 
-const options: PosPrintOptions = {
+const options: PrintOptions = {
   preview: false,
   margin: '0 0 0 0',
   copies: 1,
@@ -77,7 +77,7 @@ const options: PosPrintOptions = {
   pageSize: '80mm',
 };
 
-const data: PosPrintData[] = [
+const data: PrintData[] = [
   {
     type: 'text',
     value: 'Hello World',
@@ -85,7 +85,7 @@ const data: PosPrintData[] = [
   },
 ];
 
-posPrinter
+printer
   .print(data, options)
   .then(() => console.log('Done'))
   .catch((error) => console.error(error));
@@ -232,9 +232,9 @@ Tables can contain text and images in cells:
 Retrieve a list of all available printers on the system:
 
 ```typescript
-import { posPrinter } from '@devraghu/electron-printer';
+import { printer } from '@devraghu/electron-printer';
 
-const printers = posPrinter.getPrinters();
+const printers = printer.getPrinters();
 console.log(printers);
 // [{ name: 'XP-80C', isDefault: true, ... }, ...]
 ```
@@ -244,10 +244,10 @@ console.log(printers);
 Open a cash drawer connected to a thermal printer:
 
 ```typescript
-import { posPrinter } from '@devraghu/electron-printer';
+import { printer } from '@devraghu/electron-printer';
 
 // Open cash drawer on specific printer
-posPrinter
+printer
   .openCashDrawer('XP-80C')
   .then(() => console.log('Cash drawer opened'))
   .catch((error) => console.error('Failed to open cash drawer:', error));
@@ -262,7 +262,7 @@ electron-printer/
 ├── src/
 │   ├── main/
 │   │   ├── index.ts          # Main exports
-│   │   ├── pos-printer.ts    # posPrinter exports
+│   │   ├── printer.ts        # printer exports
 │   │   ├── models.ts         # TypeScript interfaces
 │   │   └── utils.ts          # Helper functions
 │   ├── renderer/

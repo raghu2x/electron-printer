@@ -39,10 +39,10 @@ test.describe('Printer Functionality Tests', () => {
     await electronApp.close();
   });
 
-  test('should have posPrinter available in main process', async () => {
+  test('should have printer available in main process', async () => {
     const checkResult = (await window.evaluate(async () => {
       const api = globalThis.window.electronDemoAPI;
-      return await api.invoke('test-pos-printer-available');
+      return await api.invoke('test-printer-available');
     })) as AvailabilityResult;
 
     expect(checkResult.success).toBe(true);
@@ -69,7 +69,7 @@ test.describe('Printer Functionality Tests', () => {
         },
       ];
 
-      return await api.invoke('test-pos-printer-print', data, options);
+      return await api.invoke('test-printer-print', data, options);
     })) as PrintResult;
 
     expect(printResult.success).toBe(true);
@@ -116,7 +116,7 @@ test.describe('Printer Functionality Tests', () => {
         },
       ];
 
-      return await api.invoke('test-pos-printer-print', data, options);
+      return await api.invoke('test-printer-print', data, options);
     })) as PrintResult;
 
     expect(printResult.success).toBe(true);
@@ -152,7 +152,7 @@ test.describe('Printer Functionality Tests', () => {
         },
       ];
 
-      return await api.invoke('test-pos-printer-print', data, options);
+      return await api.invoke('test-printer-print', data, options);
     })) as PrintResult;
 
     expect(printResult.success).toBe(true);
@@ -183,7 +183,7 @@ test.describe('Printer Functionality Tests', () => {
         ];
 
         try {
-          const result = await api.invoke('test-pos-printer-print', data, options);
+          const result = await api.invoke('test-printer-print', data, options);
           return { ...(result as object), pageSize: size };
         } catch (error) {
           return { success: false, error: (error as Error).message, pageSize: size };
@@ -215,7 +215,7 @@ test.describe('Printer Functionality Tests', () => {
         },
       ];
 
-      return await api.invoke('test-pos-printer-print', data, options);
+      return await api.invoke('test-printer-print', data, options);
     })) as PrintResult;
 
     expect(printResult.success).toBe(true);

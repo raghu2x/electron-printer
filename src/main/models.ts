@@ -11,7 +11,7 @@ export interface SizeOptions {
  * Print options
  * @see https://www.electronjs.org/docs/latest/api/web-contents#contentsprintoptions-callback
  */
-export interface PosPrintOptions extends Omit<WebContentsPrintOptions, 'pageSize' | 'deviceName' | 'dpi'> {
+export interface PrintOptions extends Omit<WebContentsPrintOptions, 'pageSize' | 'deviceName' | 'dpi'> {
   // width of page and body
   width?: string;
   margin?: string;
@@ -28,70 +28,65 @@ export interface PosPrintOptions extends Omit<WebContentsPrintOptions, 'pageSize
 }
 
 /** Alignment for barCode and qrCode */
-export declare type PosPrintPosition = 'left' | 'center' | 'right';
+export declare type PrintPosition = 'left' | 'center' | 'right';
 
-export type PosPrintTableField = PosPrintImageData | PosPrintTextData;
+export type PrintTableField = PrintImageData | PrintTextData;
 
 /** Base properties shared by all print data types */
-interface PosPrintDataBase {
+interface PrintDataBase {
   style?: PrintDataStyle;
 }
 
 /** Text content for printing */
-export interface PosPrintTextData extends PosPrintDataBase {
+export interface PrintTextData extends PrintDataBase {
   type: 'text';
   value: string;
 }
 
 /** Barcode content for printing */
-export interface PosPrintBarCodeData extends PosPrintDataBase {
+export interface PrintBarCodeData extends PrintDataBase {
   type: 'barCode';
   value: string;
   width?: string;
   height?: string;
   fontsize?: number;
   displayValue?: boolean;
-  position?: PosPrintPosition;
+  position?: PrintPosition;
 }
 
 /** QR code content for printing */
-export interface PosPrintQRCodeData extends PosPrintDataBase {
+export interface PrintQRCodeData extends PrintDataBase {
   type: 'qrCode';
   value: string;
   width?: string;
-  position?: PosPrintPosition;
+  position?: PrintPosition;
 }
 
 /** Image content for printing */
-export interface PosPrintImageData extends PosPrintDataBase {
+export interface PrintImageData extends PrintDataBase {
   type: 'image';
   path?: string;
   url?: string;
   width?: string;
   height?: string;
-  position?: PosPrintPosition;
+  position?: PrintPosition;
 }
 
 /** Table content for printing */
-export interface PosPrintTableData extends PosPrintDataBase {
+export interface PrintTableData extends PrintDataBase {
   type: 'table';
-  tableHeader?: PosPrintTableField[] | string[];
-  tableBody?: PosPrintTableField[][] | string[][];
-  tableFooter?: PosPrintTableField[] | string[];
+  tableHeader?: PrintTableField[] | string[];
+  tableBody?: PrintTableField[][] | string[][];
+  tableFooter?: PrintTableField[] | string[];
   tableHeaderStyle?: PrintDataStyle;
   tableBodyStyle?: PrintDataStyle;
   tableFooterStyle?: PrintDataStyle;
 }
 
 /** Discriminated union of all print data types */
-export type PosPrintData =
-  | PosPrintTextData
-  | PosPrintBarCodeData
-  | PosPrintQRCodeData
-  | PosPrintImageData
-  | PosPrintTableData;
+export type PrintData = PrintTextData | PrintBarCodeData | PrintQRCodeData | PrintImageData | PrintTableData;
 
-export declare type PosPrintType = 'text' | 'barCode' | 'qrCode' | 'image' | 'table';
+export declare type PrintType = 'text' | 'barCode' | 'qrCode' | 'image' | 'table';
 
 /**
  * CSS Style interface - a subset of CSSStyleDeclaration properties commonly used for printing
@@ -103,8 +98,8 @@ export type PrintDataStyle = {
 
 export interface PrintResult {
   complete: boolean;
-  data?: PosPrintData[];
-  options?: PosPrintOptions;
+  data?: PrintData[];
+  options?: PrintOptions;
 }
 
 export interface IpcMsgReplyResult {

@@ -1,14 +1,14 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import type { IpcMsgReplyResult, PosPrintData, PosPrintOptions } from '../main/models';
+import type { IpcMsgReplyResult, PrintData, PrintOptions } from '../main/models';
 
 const electronAPI = {
   /**
    * Registers callback for body initialization event
    * @param callback - handler for width and margin options
    */
-  onBodyInit: (callback: (options: Pick<PosPrintOptions, 'width' | 'margin'>) => void): void => {
+  onBodyInit: (callback: (options: Pick<PrintOptions, 'width' | 'margin'>) => void): void => {
     ipcRenderer.on('body-init', (_event, arg) => {
       callback(arg);
     });
@@ -16,9 +16,9 @@ const electronAPI = {
 
   /**
    * Registers callback for render line event
-   * @param callback - handler for line data and index
+   * @param callback - handler for print item data and index
    */
-  onRenderLine: (callback: (data: { line: PosPrintData; lineIndex: number }) => void): void => {
+  onRenderLine: (callback: (data: { printItem: PrintData; itemIndex: number }) => void): void => {
     ipcRenderer.on('render-line', (_event, arg) => {
       callback(arg);
     });
