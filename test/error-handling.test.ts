@@ -55,7 +55,7 @@ test.describe('Error Handling Tests', () => {
     }
   });
 
-  test('should handle invalid page size', async () => {
+  test('should reject invalid page size string', async () => {
     const printResult = (await window.evaluate(async () => {
       const api = globalThis.window.electronDemoAPI;
 
@@ -78,7 +78,9 @@ test.describe('Error Handling Tests', () => {
       return await api.invoke('test-printer-print', data, options);
     })) as PrintResult;
 
-    expect(printResult.success).toBe(true);
+    expect(printResult.success).toBe(false);
+    expect(printResult.error).toContain('Invalid pageSize');
+    expect(printResult.error).toContain('Valid sizes are');
   });
 
   test('should handle empty data array', async () => {
@@ -99,39 +101,6 @@ test.describe('Error Handling Tests', () => {
     })) as PrintResult;
 
     expect(printResult.success).toBe(true);
-  });
-
-  test('should handle invalid barcode data', async () => {
-    const printResult = (await window.evaluate(async () => {
-      const api = globalThis.window.electronDemoAPI;
-
-      const options = {
-        preview: true,
-        silent: true,
-        margin: 'auto',
-        copies: 1,
-        pageSize: '80mm',
-      };
-
-      const data = [
-        {
-          type: 'barCode',
-          value: '',
-          height: 40,
-          width: 2,
-          displayValue: true,
-          fontsize: 12,
-        },
-      ];
-
-      return await api.invoke('test-printer-print', data, options);
-    })) as PrintResult;
-
-    if (printResult.success) {
-      expect(printResult.success).toBe(true);
-    } else {
-      expect(typeof printResult.error).toBe('string');
-    }
   });
 
   test('should handle invalid image URL', async () => {
@@ -192,7 +161,7 @@ test.describe('Error Handling Tests', () => {
     expect(printResult.success).toBe(true);
   });
 
-  test('should handle missing required properties', async () => {
+  test('should handle missing value properties', async () => {
     const printResult = (await window.evaluate(async () => {
       const api = globalThis.window.electronDemoAPI;
 
@@ -207,11 +176,9 @@ test.describe('Error Handling Tests', () => {
       const data = [
         {
           type: 'text',
-          // Missing value property
         },
         {
           type: 'barCode',
-          // Missing value property
         },
       ];
 
@@ -248,7 +215,7 @@ test.describe('Error Handling Tests', () => {
     expect(printResult.success).toBe(true);
   });
 
-  test('should handle zero or negative copies', async () => {
+  test('should reject zero copies', async () => {
     const printResult = (await window.evaluate(async () => {
       const api = globalThis.window.electronDemoAPI;
 
@@ -271,6 +238,34 @@ test.describe('Error Handling Tests', () => {
       return await api.invoke('test-printer-print', data, options);
     })) as PrintResult;
 
-    expect(printResult.success).toBe(true);
+    expect(printResult.success).toBe(false);
+    expect(printResult.error).toContain('Invalid copies');
+  });
+
+  test('should reject negative copies', async () => {
+    const printResult = (await window.evaluate(async () => {
+      const api = globalThis.window.electronDemoAPI;
+
+      const options = {
+        preview: true,
+        silent: true,
+        margin: 'auto',
+        copies: -5,
+        pageSize: '80mm',
+      };
+
+      const data = [
+        {
+          type: 'text',
+          value: 'Test with negative copies',
+          style: { fontSize: '14px' },
+        },
+      ];
+
+      return await api.invoke('test-printer-print', data, options);
+    })) as PrintResult;
+
+    expect(printResult.success).toBe(false);
+    expect(printResult.error).toContain('Invalid copies');
   });
 });

@@ -1,6 +1,9 @@
 import { ipcMain, WebContents } from 'electron';
 import { IpcMsgReplyResult, PaperSize, PrintData, PrintOptions, SizeOptions } from './models';
 
+/** Valid paper sizes */
+const VALID_PAPER_SIZES: Set<PaperSize> = new Set(['44mm', '57mm', '58mm', '76mm', '78mm', '80mm']);
+
 /** Paper width in pixels for window sizing */
 const PAPER_WIDTHS_PX: Record<PaperSize, number> = {
   '44mm': 166,
@@ -41,21 +44,29 @@ export function sendIpcMsg(channel: string, webContents: WebContents, arg: unkno
 }
 
 /**
- * Parses paper size to pixel dimensions for window sizing
+ * Parses and validates paper size to pixel dimensions for window sizing
  * @param pageSize - paper size string or custom dimensions
+ * @throws Error if pageSize is invalid
  */
 export function parsePaperSize(pageSize?: PaperSize | SizeOptions): SizeOptions {
   const defaultHeight = 1200;
   const defaultWidth = 219;
 
   if (typeof pageSize === 'string') {
+    if (!VALID_PAPER_SIZES.has(pageSize as PaperSize)) {
+      const validSizes = [...VALID_PAPER_SIZES].join(', ');
+      throw new Error(`Invalid pageSize "${pageSize}". Valid sizes are: ${validSizes}`);
+    }
     return {
-      width: PAPER_WIDTHS_PX[pageSize] ?? defaultWidth,
+      width: PAPER_WIDTHS_PX[pageSize],
       height: defaultHeight,
     };
   }
 
   if (typeof pageSize === 'object') {
+    if (!pageSize.width || !pageSize.height) {
+      throw new Error('height and width properties are required for options.pageSize');
+    }
     return {
       width: pageSize.width,
       height: pageSize.height,
@@ -141,8 +152,8 @@ export function validatePrintOptions(data: PrintData[], options: PrintOptions): 
     throw new Error("A printer name is required, if you don't want to specify a printer name, set silent to true");
   }
 
-  if (typeof options.pageSize === 'object' && (!options.pageSize.height || !options.pageSize.width)) {
-    throw new Error('height and width properties are required for options.pageSize');
+  if (typeof options.copies === 'number' && options.copies <= 0) {
+    throw new Error(`Invalid copies value: ${options.copies}. Must be a positive integer`);
   }
 
   for (const [index, item] of data.entries()) {

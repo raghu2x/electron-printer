@@ -69,9 +69,10 @@ function executePrint(window: BrowserWindow, printConfig: WebContentsPrintOption
  */
 async function print(data: PrintData[], options: PrintOptions): Promise<PrintResult> {
   validatePrintOptions(data, options);
+  const pageSize = parsePaperSize(options.pageSize);
 
   const window = new BrowserWindow({
-    ...parsePaperSize(options.pageSize),
+    ...pageSize,
     show: !!options.preview,
     webPreferences: {
       nodeIntegration: false,
@@ -92,8 +93,8 @@ async function print(data: PrintData[], options: PrintOptions): Promise<PrintRes
       return { complete: true, data, options };
     }
 
-    const pageSize = await parsePaperSizeInMicrons(window.webContents, options.pageSize);
-    const printConfig = buildPrintConfig(options, pageSize);
+    const pageSizeInMicrons = await parsePaperSizeInMicrons(window.webContents, options.pageSize);
+    const printConfig = buildPrintConfig(options, pageSizeInMicrons);
     const printPromise = executePrint(window, printConfig);
 
     // Use AbortController for timeout management with proper cleanup
