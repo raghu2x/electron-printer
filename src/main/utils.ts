@@ -104,13 +104,31 @@ export async function parsePaperSizeInMicrons(
 }
 
 /**
- * Creates a timeout promise for print operations
+ * Wraps a promise with an AbortSignal-based timeout.
+ * Properly cleans up timeout when promise resolves/rejects or signal aborts.
+ * @param promise - the promise to wrap
+ * @param timeoutMs - timeout in milliseconds
+ * @param signal - AbortSignal for cancellation
  */
-export function createPrintTimeout(timeoutMs: number): Promise<never> {
-  return new Promise((_, reject) => {
-    setTimeout(() => {
+export function withTimeout<T>(promise: Promise<T>, timeoutMs: number, signal: AbortSignal): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timeoutId = setTimeout(() => {
       reject(new Error('[TimedOutError] Make sure your printer is connected'));
     }, timeoutMs);
+
+    const cleanup = (): void => clearTimeout(timeoutId);
+
+    signal.addEventListener('abort', cleanup, { once: true });
+
+    promise
+      .then((result) => {
+        cleanup();
+        resolve(result);
+      })
+      .catch((error) => {
+        cleanup();
+        reject(error);
+      });
   });
 }
 

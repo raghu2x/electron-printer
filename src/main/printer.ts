@@ -1,7 +1,7 @@
 import type { PrintData, PrintOptions, PrintResult, SizeOptions } from './models';
 import { BrowserWindow, type WebContentsPrintOptions } from 'electron';
 import { join } from 'node:path';
-import { createPrintTimeout, parsePaperSize, parsePaperSizeInMicrons, sendIpcMsg, validatePrintOptions } from './utils';
+import { withTimeout, parsePaperSize, parsePaperSizeInMicrons, sendIpcMsg, validatePrintOptions } from './utils';
 import { openCashDrawer, getAvailablePrinters } from '@devraghu/cashdrawer';
 
 if (process.type === 'renderer') {
@@ -94,14 +94,17 @@ async function print(data: PrintData[], options: PrintOptions): Promise<PrintRes
 
     const pageSize = await parsePaperSizeInMicrons(window.webContents, options.pageSize);
     const printConfig = buildPrintConfig(options, pageSize);
-
-    // Use timeout for non-silent printing to prevent hanging on disconnected printers
-    const timeoutMs = (options.timeOutPerLine ?? 400) * data.length + 200;
     const printPromise = executePrint(window, printConfig);
+
+    // Use AbortController for timeout management with proper cleanup
+    const abortController = new AbortController();
+    const timeoutMs = (options.timeOutPerLine ?? 400) * data.length + 200;
 
     const { success } = options.silent
       ? await printPromise
-      : await Promise.race([printPromise, createPrintTimeout(timeoutMs)]);
+      : await withTimeout(printPromise, timeoutMs, abortController.signal);
+
+    abortController.abort();
 
     return { complete: success, options };
   } catch (error) {
