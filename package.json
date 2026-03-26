@@ -74,7 +74,7 @@
   "lint-staged": {
     "*.{ts,tsx}": [
       "oxlint --fix",
-      "oxfmt"
+      "oxfmt --no-error-on-unmatched-pattern"
     ]
   },
   "engines": {
