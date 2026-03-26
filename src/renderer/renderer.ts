@@ -1,5 +1,3 @@
-// oxlint-disable-next-line import/no-unassigned-import
-import './index.css';
 import { applyElementStyles, createTextElement, createTableCell, createImageElement, sanitizeHtml } from './utils';
 import JsBarcode from 'jsbarcode';
 import QRCode from 'qrcode';
