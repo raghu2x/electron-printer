@@ -61,8 +61,10 @@ const createWindow = () => {
   });
 
   win.loadFile('index.html');
-  // open deve tools
+  win.setMenu(null);
+
   if (process.env.NODE_ENV !== 'test') {
+    win.maximize();
     win.webContents.openDevTools();
   }
 };

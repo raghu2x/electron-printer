@@ -73,6 +73,7 @@ export function sanitizeHtml(html: string): string {
   return DOMPurify.sanitize(html, {
     ALLOWED_TAGS: ['b', 'i', 'u', 'strong', 'em', 'br', 'span', 'p', 'div'],
     ALLOWED_ATTR: ['style', 'class'],
+    RETURN_DOM_FRAGMENT: false,
   });
 }
 

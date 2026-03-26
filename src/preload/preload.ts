@@ -9,7 +9,7 @@ const electronAPI = {
    * @param callback - handler for width and margin options
    */
   onBodyInit: (callback: (options: Pick<PrintOptions, 'width' | 'margin'>) => void): void => {
-    ipcRenderer.on('body-init', (_event, arg) => {
+    ipcRenderer.once('body-init', (_event, arg) => {
       callback(arg);
     });
   },
