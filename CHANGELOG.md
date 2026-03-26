@@ -1,5 +1,13 @@
 # Changelog
 
+## v2.1.0 - (_2026-03-26_)
+
+### Changed
+
+- Upgraded to TypeScript 6
+- Upgraded all dependencies to latest versions
+- Switched from npm to bun as the package manager
+
 ## v2.0.0 - (_2025-03-01_)
 
 ### Changed
