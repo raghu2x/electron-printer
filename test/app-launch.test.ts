@@ -28,12 +28,12 @@ test.describe('Application Launch Tests', () => {
   });
 
   test('window should have correct size', async () => {
-    const bounds = await window.evaluate(() => ({
-      width: globalThis.window.innerWidth,
-      height: globalThis.window.innerHeight,
-    }));
-    expect(bounds.width).toBeGreaterThan(0);
-    expect(bounds.height).toBeGreaterThan(0);
+    const bounds = await electronApp.evaluate(({ BrowserWindow }) => {
+      const win = BrowserWindow.getAllWindows()[0];
+      return win?.getBounds();
+    });
+    expect(bounds?.width).toBeGreaterThan(0);
+    expect(bounds?.height).toBeGreaterThan(0);
   });
 
   test('should load demo HTML correctly', async () => {
