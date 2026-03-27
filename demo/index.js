@@ -1,5 +1,5 @@
 // oxlint-disable no-console
-import { app, BrowserWindow, ipcMain, screen } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'node:path';
 import { printer } from '../dist/index.js';
 
@@ -48,8 +48,6 @@ ipcMain.handle('test-printer-print', async (event, data, options) => {
 });
 
 const createWindow = () => {
-  const size = screen.getPrimaryDisplay().size;
-  console.log(size);
   const win = new BrowserWindow({
     width: 800,
     height: 600,
@@ -60,7 +58,7 @@ const createWindow = () => {
     },
   });
 
-  win.loadFile('index.html');
+  win.loadFile(path.join(import.meta.dirname, 'index.html'));
   win.setMenu(null);
 
   if (process.env.NODE_ENV !== 'test') {

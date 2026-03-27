@@ -33,8 +33,15 @@ jobs:
       - name: Build
         run: bun run build
 
-      - name: Install Electron system dependencies
-        run: bunx playwright install-deps chromium
+      - name: Install system dependencies for Electron
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1 python3 make g++
+          sudo apt-get install -y libasound2t64 || sudo apt-get install -y libasound2
+          sudo apt-get install -y libcups-dev || sudo apt-get install -y libcups2-dev
+
+      - name: Rebuild native modules for Electron
+        run: npx electron-rebuild
 
       - name: Test
         run: xvfb-run --auto-servernum bun run test

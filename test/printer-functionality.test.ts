@@ -28,7 +28,7 @@ test.describe('Printer Functionality Tests', () => {
 
   test.beforeAll(async () => {
     electronApp = await electron.launch({
-      args: ['./demo'],
+      args: ['./demo', '--no-sandbox', '--disable-setuid-sandbox'],
       env: { ...process.env, NODE_ENV: 'test' },
     });
     window = await electronApp.firstWindow({ timeout: 60000 });
