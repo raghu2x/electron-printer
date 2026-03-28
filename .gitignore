@@ -4,3 +4,5 @@ coverage
 test-results
 
 dist/
+
+electron.vite.config.*
