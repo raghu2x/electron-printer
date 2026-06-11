@@ -1,5 +1,21 @@
 # Changelog
 
+## v2.5.0 - (_2026-06-11_)
+
+### Fixed
+
+- Background colors (`background-color`) now print correctly via `print-color-adjust: exact` CSS rule applied globally to the print document
+
+### Deprecated
+
+- `printBackground` option has no effect and will be removed in a future major version — background printing is now always enabled
+
+## v2.4.0 - (_2026-06-11_)
+
+### Changed
+
+- `sanitizeHtml` now uses a denylist approach instead of an allowlist, allowing more valid HTML tags through while still blocking dangerous ones
+
 ## v2.3.0 - (_2026-05-20_)
 
 ### Changed
