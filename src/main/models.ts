@@ -16,7 +16,10 @@ export interface SizeOptions {
  *
  * @see https://www.electronjs.org/docs/latest/api/web-contents#contentsprintoptions-callback
  */
-export interface PrintOptions extends Omit<WebContentsPrintOptions, 'pageSize' | 'deviceName' | 'dpi'> {
+export interface PrintOptions extends Omit<
+  WebContentsPrintOptions,
+  'pageSize' | 'deviceName' | 'dpi' | 'printBackground'
+> {
   /**
    * CSS width of the print container element.
    * @example "100%", "80mm", "300px"
@@ -66,6 +69,11 @@ export interface PrintOptions extends Omit<WebContentsPrintOptions, 'pageSize' |
    * If not provided, uses the default built-in template.
    */
   pathTemplate?: string;
+
+  /**
+   * @deprecated Background colors are always printed. This option has no effect.
+   */
+  printBackground?: boolean;
 }
 
 /** Alignment for barCode and qrCode */

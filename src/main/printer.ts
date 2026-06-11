@@ -13,8 +13,8 @@ if (process.type === 'renderer') {
  */
 function buildPrintConfig(options: PrintOptions, pageSize: SizeOptions): WebContentsPrintOptions {
   return {
-    silent: !!options.silent,
-    printBackground: !!options.printBackground,
+    silent: options.silent,
+    printBackground: options.printBackground,
     deviceName: options.printerName,
     copies: options.copies ?? 1,
     pageSize,

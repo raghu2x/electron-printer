@@ -3,6 +3,11 @@
   page-break-before: always;
 }
 
+* {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
 body {
   font-size: 12px;
   /*line-height: 24px;*/
