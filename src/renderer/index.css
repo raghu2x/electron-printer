@@ -3,7 +3,10 @@
   page-break-before: always;
 }
 
-* {
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
@@ -17,11 +20,6 @@ body {
   content: '';
   display: table;
   clear: both;
-}
-
-.font {
-  font-size: 12px;
-  margin: 0 15px;
 }
 
 table {
