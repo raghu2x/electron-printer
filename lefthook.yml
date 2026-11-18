@@ -1,0 +1,11 @@
+pre-commit:
+  jobs:
+    - name: lint
+      glob: '*.{ts,tsx}'
+      run: bunx oxlint --fix {staged_files}
+      stage_fixed: true
+
+    - name: format
+      glob: '*.{ts,tsx}'
+      run: bunx oxfmt --no-error-on-unmatched-pattern {staged_files}
+      stage_fixed: true
