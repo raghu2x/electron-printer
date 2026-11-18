@@ -20,6 +20,8 @@
     "max-depth": "off",
     "max-lines-per-function": "off",
     "no-await-in-loop": "off",
+    // parseInt is intentional: sizes may carry units (e.g. "2px")
+    "unicorn/prefer-number-coercion": "off",
     "no-unused-vars": [
       "error",
       {

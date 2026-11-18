@@ -1,21 +1,20 @@
-import { resolve } from 'node:path';
+import path from 'node:path';
 import { defineConfig } from 'electron-vite';
-import dts from 'unplugin-dts/vite';
+import { dts } from 'rolldown-plugin-dts';
 
 export default defineConfig({
   main: {
-    plugins: [
-      dts({
-        include: ['src/main/**/*.ts'],
-        outDirs: 'dist',
-        bundleTypes: true,
-      }),
-    ],
+    plugins: [dts({ generator: 'tsgo' })],
+    // Keep Vite's Oxc transform away from the generated declarations, otherwise
+    // it strips them like regular TS. `exclude` replaces the defaults, so .js stays excluded too.
+    oxc: {
+      exclude: [/\.js$/u, /\.d\.[cm]?ts$/u],
+    },
     build: {
       externalizeDeps: true,
-      minify: 'esbuild',
+      minify: 'oxc',
       lib: {
-        entry: resolve(import.meta.dirname, 'src/main/index.ts'),
+        entry: path.resolve(import.meta.dirname, 'src/main/index.ts'),
         formats: ['es'],
         fileName: () => 'index.js',
       },
@@ -30,10 +29,10 @@ export default defineConfig({
       externalizeDeps: {
         exclude: ['fs', 'path'],
       },
-      minify: 'esbuild',
+      minify: 'oxc',
       outDir: 'dist/preload',
       lib: {
-        entry: resolve(import.meta.dirname, 'src/preload/preload.ts'),
+        entry: path.resolve(import.meta.dirname, 'src/preload/preload.ts'),
         formats: ['cjs'],
         fileName: () => 'preload.cjs',
       },
@@ -45,10 +44,10 @@ export default defineConfig({
   renderer: {
     root: 'src/renderer',
     build: {
-      minify: 'esbuild',
-      outDir: resolve(import.meta.dirname, 'dist/renderer'),
+      minify: 'oxc',
+      outDir: path.resolve(import.meta.dirname, 'dist/renderer'),
       rollupOptions: {
-        input: resolve(import.meta.dirname, 'src/renderer/index.html'),
+        input: path.resolve(import.meta.dirname, 'src/renderer/index.html'),
       },
     },
   },

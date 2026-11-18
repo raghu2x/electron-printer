@@ -1,6 +1,6 @@
 import type { PrintData, PrintOptions, PrintResult, SizeOptions } from './models';
 import { BrowserWindow, type WebContentsPrintOptions } from 'electron';
-import { join } from 'node:path';
+import path from 'node:path';
 import { withTimeout, parsePaperSize, parsePaperSizeInMicrons, sendIpcMsg, validatePrintOptions } from './utils';
 import { openCashDrawer, getAvailablePrinters } from '@devraghu/cashdrawer';
 
@@ -78,11 +78,11 @@ async function print(data: PrintData[], options: PrintOptions): Promise<PrintRes
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: false,
-      preload: join(import.meta.dirname, 'preload/preload.cjs'),
+      preload: path.join(import.meta.dirname, 'preload/preload.cjs'),
     },
   });
 
-  const htmlPath = options.pathTemplate || join(import.meta.dirname, 'renderer/index.html');
+  const htmlPath = options.pathTemplate || path.join(import.meta.dirname, 'renderer/index.html');
 
   try {
     await window.loadFile(htmlPath);
