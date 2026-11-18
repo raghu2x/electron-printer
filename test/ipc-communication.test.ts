@@ -39,13 +39,16 @@ test.describe('IPC Communication Tests', () => {
       });
     }) as Promise<IpcResult>;
 
-    const button = window.locator('button.btn').first();
+    const button = window.getByRole('button', { name: 'Print Test Receipt' });
     await button.click();
 
     const result = await messagePromise;
 
     expect(result.received).toBe(true);
-    expect(result.data).toEqual({});
+    expect(result.data).toMatchObject({
+      data: expect.any(Array),
+      options: { preview: true, pageSize: '80mm', copies: 1 },
+    });
   });
 
   test('should have electronAPI available in renderer process', async () => {

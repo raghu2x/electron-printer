@@ -1,13 +1,22 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronDemoAPI', {
-  sendTestPrint: () => {
-    ipcRenderer.send('test-print', {});
+  // Environment details and demo asset paths
+  getDemoInfo: () => ipcRenderer.invoke('demo-info'),
+
+  // Receipt printing: fire the job, then listen for its outcome
+  sendTestPrint: (payload = {}) => {
+    ipcRenderer.send('test-print', payload);
   },
-  // Cash drawer APIs
+  onPrintResult: (callback) => {
+    ipcRenderer.on('test-print-result', (_event, result) => callback(result));
+  },
+
+  // Printers and cash drawer
   getPrinters: () => ipcRenderer.invoke('get-printers'),
   openCashDrawer: (printerName, options) => ipcRenderer.invoke('open-cash-drawer', printerName, options),
-  // Test APIs for Playwright tests
+
+  // Generic channels used by the Playwright tests
   invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args),
   send: (channel, ...args) => ipcRenderer.send(channel, ...args),
 });

@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Cash drawers connected to Star Micronics printers now open. `@devraghu/cashdrawer` `0.5.0` detects Star printers and sends the Star drawer command instead of ESC/POS
+
+### Added
+
+- `commandSet` drawer option (`'auto'` | `'escpos'` | `'star'`) to override the detected command language in `printer.openCashDrawer`
+
+### Changed
+
+- Upgraded `@devraghu/cashdrawer` to `0.5.0`
+- Migrated to TypeScript 7 and replaced `unplugin-dts` with `rolldown-plugin-dts` for type generation
+- Supported Node.js versions are now 22, 24 and 26 or later (dropped Node.js 20)
+- Redesigned the demo app: printer list, editable sample receipts, all cash drawer options and an activity log
+
 ## v2.5.0 - (_2026-06-11_)
 
 ### Fixed

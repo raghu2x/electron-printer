@@ -238,7 +238,7 @@ import { printer } from '@devraghu/electron-printer';
 
 const printers = await printer.getPrinters();
 console.log(printers);
-// [{ name: 'XP-80C', isDefault: true, ... }, ...]
+// [{ name: 'XP-80C', default: true, status: 'IDLE', type: 'USB' }, ...]
 ```
 
 ### Cash Drawer
@@ -249,11 +249,42 @@ Open a cash drawer connected to a thermal printer:
 import { printer } from '@devraghu/electron-printer';
 
 // Open cash drawer on specific printer
-printer
-  .openCashDrawer('XP-80C')
-  .then(() => console.log('Cash drawer opened'))
-  .catch((error) => console.error('Failed to open cash drawer:', error));
+const result = await printer.openCashDrawer('XP-80C');
+
+if (result.success) {
+  console.log('Cash drawer opened');
+} else {
+  console.error('Failed to open cash drawer:', result.errorMessage, result.errorCode);
+}
 ```
+
+`openCashDrawer` does not reject when the drawer fails to open. It resolves with `{ success, errorMessage, errorCode }`, so check `success`. Error codes are exported as `PrinterErrorCodes`.
+
+An optional second argument tunes the drawer command:
+
+```typescript
+await printer.openCashDrawer('Star TSP143', {
+  commandSet: 'star',
+  pin: 0,
+  pulseOnTime: 50,
+  pulseOffTime: 250,
+});
+```
+
+| Option                  | Type                               | Default  | Description                                                             |
+| ----------------------- | ---------------------------------- | -------- | ----------------------------------------------------------------------- |
+| `commandSet`            | `'auto'` \| `'escpos'` \| `'star'` | `'auto'` | Command language used to kick the drawer                                |
+| `pin`                   | `0` \| `1`                         | `0`      | Drawer kick connector pin                                               |
+| `pulseOnTime`           | `number` (0-255)                   | `50`     | Pulse on time, in 2 ms units (~100 ms)                                  |
+| `pulseOffTime`          | `number` (0-255)                   | `250`    | Pulse off time, in 2 ms units (~500 ms)                                 |
+| `errorOnVirtualPrinter` | `boolean`                          | `false`  | Return an error for virtual printers (PDF, XPS, Fax) instead of success |
+
+#### Star Micronics printers
+
+Star printers in their native emulations (Star Line Mode, StarPRNT, Star Graphic) do not understand the ESC/POS drawer command. With `commandSet: 'auto'` they are detected from the printer name, driver or model and sent the Star command instead.
+
+- If a Star printer has been renamed so that detection fails, pass `commandSet: 'star'`.
+- If a Star printer is switched to ESC/POS emulation, pass `commandSet: 'escpos'`.
 
 ---
 
@@ -291,9 +322,9 @@ npm run build
 
 ```bash
 npm run demo
-# or
-npm start
 ```
+
+The demo lists the system printers, previews or prints sample receipts with editable print data, and opens a cash drawer with every drawer option.
 
 ### Run Tests
 

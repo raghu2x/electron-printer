@@ -1,56 +1,40 @@
 // oxlint-disable no-console
 import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'node:path';
-import { printer } from '../dist/index.js';
+import { printer, PrinterErrorCodes } from '../dist/index.js';
 
-// Test IPC handlers for Playwright tests
-ipcMain.handle('test-printer-available', () => {
-  try {
-    console.log('Testing printer availability...');
-    console.log('printer type:', typeof printer);
-    console.log('printer.print type:', typeof printer.print);
+const isTest = process.env.NODE_ENV === 'test';
 
-    const available = typeof printer === 'object' && typeof printer.print === 'function';
+/** Used when the renderer sends no payload (e.g. a bare `test-print` message). */
+const FALLBACK_DATA = [
+  {
+    type: 'text',
+    value: 'ELECTRON PRINTER',
+    style: { fontWeight: '700', textAlign: 'center', fontSize: '20px' },
+  },
+  { type: 'text', value: 'Test receipt', style: { textAlign: 'center', fontSize: '12px' } },
+  { type: 'barCode', value: '023456789010', height: 40, width: 2, displayValue: true, fontsize: 12 },
+  { type: 'qrCode', value: 'https://github.com/raghu2x/electron-printer', width: 80, position: 'center' },
+];
 
-    return {
-      success: true,
-      available: available,
-      debug: {
-        printerType: typeof printer,
-        printMethodType: typeof printer.print,
-        hasStaticPrint: typeof printer.print === 'function',
-      },
-    };
-  } catch (error) {
-    console.error('Error checking printer availability:', error);
-    return { success: false, error: error.message };
-  }
-});
+const FALLBACK_OPTIONS = { preview: true, margin: 'auto', copies: 1, timeOutPerLine: 1000, pageSize: '80mm' };
 
-ipcMain.handle('test-printer-print', async (event, data, options) => {
-  try {
-    console.log('Attempting to print with data:', data);
-    console.log('Print options:', options);
+/** Maps a numeric cash drawer error code back to its enum name. */
+function errorCodeName(code) {
+  return Object.keys(PrinterErrorCodes).find((key) => PrinterErrorCodes[key] === code);
+}
 
-    const result = await printer.print(data, options);
-    console.log('Print result:', result);
-
-    return { success: true, error: null, result };
-  } catch (error) {
-    console.error('Print error:', error);
-    return {
-      success: false,
-      error: error.message || error.toString(),
-      errorType: error.constructor.name,
-      stack: error.stack,
-    };
-  }
-});
+function toErrorMessage(error) {
+  return error instanceof Error ? error.message : String(error);
+}
 
 const createWindow = () => {
   const win = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 1280,
+    height: 820,
+    minWidth: 720,
+    minHeight: 520,
+    autoHideMenuBar: true,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -59,181 +43,108 @@ const createWindow = () => {
   });
 
   win.loadFile(path.join(import.meta.dirname, 'index.html'));
-  win.setMenu(null);
 
-  if (process.env.NODE_ENV !== 'test') {
+  if (!isTest) {
     win.maximize();
-    win.webContents.openDevTools();
   }
 };
 
-app.on('ready', () => {
-  createWindow();
+app.on('ready', createWindow);
+
+app.on('window-all-closed', () => {
+  app.quit();
 });
 
-ipcMain.on('test-print', testPrint);
+// ---------------------------------------------------------------------------
+// Demo IPC
+// ---------------------------------------------------------------------------
 
-// Cash drawer IPC handlers
+ipcMain.handle('demo-info', () => ({
+  platform: process.platform,
+  versions: {
+    electron: process.versions.electron,
+    node: process.versions.node,
+    chrome: process.versions.chrome,
+  },
+  // Print images loaded by `path` must live inside the working directory.
+  logoPath: path.join(import.meta.dirname, 'assets', 'logo.svg'),
+}));
+
 ipcMain.handle('get-printers', async () => {
   try {
     const printers = await printer.getPrinters();
     return { success: true, printers };
   } catch (error) {
     console.error('Error getting printers:', error);
-    return { success: false, error: error.message };
+    return { success: false, error: toErrorMessage(error) };
   }
 });
 
-ipcMain.handle('open-cash-drawer', async (event, printerName, options) => {
+ipcMain.handle('open-cash-drawer', async (_event, printerName, options) => {
   try {
-    console.log('Opening cash drawer on printer:', printerName);
+    console.log('Opening cash drawer on printer:', printerName, options);
+    // Resolves with `success: false` on failure rather than rejecting.
     const result = await printer.openCashDrawer(printerName, options);
     console.log('Cash drawer result:', result);
-    return result;
+    return { ...result, errorName: errorCodeName(result.errorCode) };
   } catch (error) {
     console.error('Error opening cash drawer:', error);
-    return { success: false, errorMessage: error.message };
+    return { success: false, errorMessage: toErrorMessage(error) };
   }
 });
 
-function testPrint() {
-  const options = {
-    //  width of content body
-    preview: true,
-    // margin of content body
-    margin: 'auto',
-    // Number of copies to print
-    copies: 1,
-    printerName: 'XP-80C',
-    timeOutPerLine: 1000,
-    pageSize: '80mm',
-  };
+ipcMain.on('test-print', async (event, payload) => {
+  const data = Array.isArray(payload?.data) ? payload.data : FALLBACK_DATA;
+  const options = { ...FALLBACK_OPTIONS, ...payload?.options };
 
-  const data = [
-    {
-      type: 'table',
-      // style the table
-      style: { border: '1px solid #ddd' },
-      // list of the columns to be rendered in the table header
-      tableHeader: [
-        { type: 'text', value: 'People' },
-        {
-          type: 'image',
-          url: 'https://randomuser.me/api/portraits/men/13.jpg',
-        },
-      ],
-      // multidimensional array depicting the rows and columns of the table body
-      tableBody: [
-        [
-          { type: 'text', value: 'Marcus' },
-          {
-            type: 'image',
-            url: 'https://randomuser.me/api/portraits/men/43.jpg',
-          },
-        ],
-        [
-          { type: 'text', value: 'Boris' },
-          {
-            type: 'image',
-            url: 'https://randomuser.me/api/portraits/men/41.jpg',
-          },
-        ],
-        [
-          { type: 'text', value: 'Andrew' },
-          {
-            type: 'image',
-            url: 'https://randomuser.me/api/portraits/men/23.jpg',
-          },
-        ],
-        [
-          { type: 'text', value: 'Tyresse' },
-          {
-            type: 'image',
-            url: 'https://randomuser.me/api/portraits/men/53.jpg',
-          },
-        ],
-      ],
-      // list of columns to be rendered in the table footer
-      tableFooter: [{ type: 'text', value: 'People' }, 'Image'],
-      // custom style for the table header
-      tableHeaderStyle: { backgroundColor: 'red', color: 'white' },
-      // custom style for the table body
-      tableBodyStyle: { border: '0.5px solid #ddd' },
-      // custom style for the table footer
-      tableFooterStyle: { backgroundColor: '#000', color: 'white' },
-    },
-    {
-      type: 'image',
-      url: 'https://randomuser.me/api/portraits/men/43.jpg',
-      // position of image: 'left' | 'center' | 'right'
-      position: 'center',
-      // width of image in px; default: auto
-      width: '60px',
-      height: '60px',
-    },
-    {
-      // 'text' | 'barCode' | 'qrCode' | 'image' | 'table
-      type: 'text',
-      value: 'SAMPLE HEADING',
-      style: { fontWeight: '700', textAlign: 'center', fontSize: '24px' },
-    },
-    {
-      // 'text' | 'barCode' | 'qrCode' | 'image' | 'table'
-      type: 'text',
-      value: 'Secondary text',
-      style: { textDecoration: 'underline', fontSize: '10px', textAlign: 'center', color: 'red' },
-    },
-    {
-      type: 'barCode',
-      value: '023456789010',
-      // height of barcode, applicable only to bar and QR codes
-      height: 40,
-      // width of barcode, applicable only to bar and QR codes
-      width: 2,
-      // Display value below barcode
-      displayValue: true,
-      fontsize: 12,
-    },
-    {
-      type: 'qrCode',
-      value: 'https://github.com/raghu2x/electron-printer',
-      height: 55,
-      width: 55,
-      position: 'right',
-    },
-    {
-      type: 'table',
-      // style the table
-      style: { border: '1px solid #ddd' },
-      // list of the columns to be rendered in the table header
-      tableHeader: ['Animal', 'Age'],
-      // multidimensional array depicting the rows and columns of the table body
-      tableBody: [
-        ['Cat', 2],
-        ['Dog', 4],
-        ['Horse', 12],
-        ['Pig', 4],
-      ],
-      // list of columns to be rendered in the table footer
-      tableFooter: ['Animal', 'Age'],
-      // custom style for the table header
-      tableHeaderStyle: { backgroundColor: '#000', color: 'white' },
-      // custom style for the table body
-      tableBodyStyle: { border: '0.5px solid #ddd' },
-      // custom style for the table footer
-      tableFooterStyle: { backgroundColor: '#000', color: 'white' },
-    },
-  ];
-
+  let result;
   try {
-    printer
-      .print(data, options)
-      .then(() => console.log('done'))
-      .catch((error) => {
-        console.error(error);
-      });
-  } catch (e) {
-    console.log(printer);
-    console.log(e);
+    const { complete } = await printer.print(data, options);
+    result = { success: complete, preview: Boolean(options.preview), printerName: options.printerName };
+  } catch (error) {
+    console.error('Print error:', error);
+    result = { success: false, error: toErrorMessage(error) };
   }
-}
+
+  if (!event.sender.isDestroyed()) {
+    event.sender.send('test-print-result', result);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// IPC handlers used by the Playwright tests
+// ---------------------------------------------------------------------------
+
+ipcMain.handle('test-printer-available', () => {
+  try {
+    const available = typeof printer === 'object' && typeof printer.print === 'function';
+
+    return {
+      success: true,
+      available,
+      debug: {
+        printerType: typeof printer,
+        printMethodType: typeof printer.print,
+        hasStaticPrint: typeof printer.print === 'function',
+      },
+    };
+  } catch (error) {
+    console.error('Error checking printer availability:', error);
+    return { success: false, error: toErrorMessage(error) };
+  }
+});
+
+ipcMain.handle('test-printer-print', async (_event, data, options) => {
+  try {
+    const result = await printer.print(data, options);
+    return { success: true, error: null, result };
+  } catch (error) {
+    console.error('Print error:', error);
+    return {
+      success: false,
+      error: toErrorMessage(error),
+      errorType: error?.constructor?.name,
+      stack: error?.stack,
+    };
+  }
+});
