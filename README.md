@@ -326,6 +326,12 @@ npm run demo
 
 The demo lists the system printers, previews or prints sample receipts with editable print data, and opens a cash drawer with every drawer option.
 
+To package the demo as a portable Windows executable (written to `release/`):
+
+```bash
+npm run demo:dist
+```
+
 ### Run Tests
 
 ```bash

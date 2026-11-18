@@ -5,6 +5,16 @@ import { printer, PrinterErrorCodes } from '../dist/index.js';
 
 const isTest = process.env.NODE_ENV === 'test';
 
+// Print images loaded by `path` must live inside the working directory. In the packaged
+// app the demo assets ship as real files in the resources folder, so work from there.
+const assetsDir = app.isPackaged
+  ? path.join(process.resourcesPath, 'demo-assets')
+  : path.join(import.meta.dirname, 'assets');
+
+if (app.isPackaged) {
+  process.chdir(process.resourcesPath);
+}
+
 /** Used when the renderer sends no payload (e.g. a bare `test-print` message). */
 const FALLBACK_DATA = [
   {
@@ -66,8 +76,7 @@ ipcMain.handle('demo-info', () => ({
     node: process.versions.node,
     chrome: process.versions.chrome,
   },
-  // Print images loaded by `path` must live inside the working directory.
-  logoPath: path.join(import.meta.dirname, 'assets', 'logo.svg'),
+  logoPath: path.join(assetsDir, 'logo.svg'),
 }));
 
 ipcMain.handle('get-printers', async () => {

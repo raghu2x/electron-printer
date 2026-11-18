@@ -1,0 +1,31 @@
+# Packages the demo app (demo/ + the built library in dist/) as a Windows executable.
+# Run with `bun run demo:dist`; output goes to release/.
+appId: dev.raghu.electron-printer.demo
+productName: Electron Printer Demo
+artifactName: electron-printer-demo-${version}-${arch}.${ext}
+
+directories:
+  output: release
+
+# The root package.json points `main` at the library; the packaged app starts the demo.
+extraMetadata:
+  main: demo/index.js
+
+files:
+  - dist/**
+  - demo/**
+  - package.json
+
+# Print images loaded by `path` are read from disk and must sit inside the working
+# directory, so the demo logo ships as a real file next to the app archive.
+extraResources:
+  - from: demo/assets
+    to: demo-assets
+
+# @devraghu/cashdrawer ships N-API prebuilds, so nothing needs compiling.
+npmRebuild: false
+
+win:
+  target:
+    - target: portable
+      arch: x64
