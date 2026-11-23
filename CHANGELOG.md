@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v2.7.0 - (_2026-11-23_)
 
 ### Fixed
 
@@ -16,6 +16,8 @@
 - Migrated to TypeScript 7 and replaced `unplugin-dts` with `rolldown-plugin-dts` for type generation
 - Supported Node.js versions are now 22, 24 and 26 or later (dropped Node.js 20)
 - Redesigned the demo app: printer list, editable sample receipts, all cash drawer options and an activity log
+- The demo can be packaged as a portable Windows executable with `npm run demo:dist`
+- Replaced husky and lint-staged with lefthook for the pre-commit hook
 
 ## v2.5.0 - (_2026-06-11_)
 
