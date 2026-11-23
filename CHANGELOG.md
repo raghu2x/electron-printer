@@ -1,5 +1,16 @@
 # Changelog
 
+## v2.7.1 - (_2026-11-23_)
+
+### Security
+
+- Upgraded `dompurify` to `3.5.0`, which contains security fixes. HTML passed to the printer is sanitized the same way as before; no API or behavior changes
+
+### Changed
+
+- Releases are now published to npm from GitHub Actions with trusted publishing
+- CI installs the Bun version pinned in `package.json`, runs the typecheck, and downloads the Electron binary before the tests
+
 ## v2.7.0 - (_2026-11-23_)
 
 ### Fixed
