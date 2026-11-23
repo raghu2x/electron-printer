@@ -1,0 +1,111 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Build and pack but do not publish to npm'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  # Tag pushes always publish; manual runs publish only with dry_run unchecked.
+  PUBLISH: ${{ github.event_name == 'push' || inputs.dry_run == false }}
+
+jobs:
+  ci:
+    name: CI
+    uses: ./.github/workflows/ci.yml
+
+  publish:
+    name: Publish to npm
+    needs: ci
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # create the GitHub release
+      id-token: write # npm trusted publishing (OIDC)
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+
+      - name: Upgrade npm (trusted publishing needs >= 11.5.1)
+        run: npm install -g npm@latest
+
+      - name: Resolve version
+        id: version
+        run: |
+          name="$(node -p "require('./package.json').name")"
+          version="$(node -p "require('./package.json').version")"
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+
+      - name: Verify tag matches package.json version
+        if: github.event_name == 'push'
+        run: |
+          [ "${{ steps.version.outputs.tag }}" = "$GITHUB_REF_NAME" ] \
+            || { echo "::error::tag $GITHUB_REF_NAME != package.json ${{ steps.version.outputs.tag }}"; exit 1; }
+
+      - name: Verify version is not already published
+        if: env.PUBLISH == 'true'
+        run: |
+          spec="${{ steps.version.outputs.name }}@${{ steps.version.outputs.version }}"
+          if npm view "$spec" version >/dev/null 2>&1; then
+            echo "::error::$spec is already on npm; bump the version in package.json"
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build
+        run: bun run build
+
+      - name: Publish (trusted publishing via OIDC)
+        if: env.PUBLISH == 'true'
+        run: npm publish --access public
+
+      - name: Dry-run pack
+        if: env.PUBLISH != 'true'
+        run: npm publish --dry-run --access public
+
+      - name: Create GitHub release
+        if: env.PUBLISH == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "::notice::Release $TAG already exists, skipping"
+            exit 0
+          fi
+
+          # Use this version's CHANGELOG.md section as the release notes.
+          awk -v tag="$TAG" '
+            /^## / { if (found) exit; if ($2 == tag) { found = 1; next } }
+            found { print }
+          ' CHANGELOG.md > release-notes.md
+
+          if [ -s release-notes.md ] && grep -q '[^[:space:]]' release-notes.md; then
+            gh release create "$TAG" --target "$GITHUB_SHA" --title "$TAG" --notes-file release-notes.md
+          else
+            echo "::warning::No CHANGELOG.md section for $TAG, generating notes instead"
+            gh release create "$TAG" --target "$GITHUB_SHA" --title "$TAG" --generate-notes
+          fi
